@@ -79,8 +79,11 @@ describe("VisitorInfoPanel", () => {
     render(<VisitorInfoPanel />);
 
     expect(await screen.findByText("访客信息")).toBeInTheDocument();
+    expect(screen.getByText("IP 地址")).toBeInTheDocument();
+    expect(screen.getByText("地理位置")).toBeInTheDocument();
+    expect(screen.getByText("运营商")).toBeInTheDocument();
     expect(screen.getByText("获取失败")).toBeInTheDocument();
-    expect(screen.getAllByText("不可用").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("不可用")).toHaveLength(3);
 
     const panel = screen.getByTestId("visitor-info-panel");
     const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
@@ -113,7 +116,9 @@ describe("VisitorInfoPanel", () => {
     render(<VisitorInfoPanel />);
 
     expect(await screen.findByText("198.51.100.9")).toBeInTheDocument();
-    expect(screen.getByText("不可用")).toBeInTheDocument();
+    expect(screen.getByText(/Singapore/)).toBeInTheDocument();
+    expect(screen.getByText(/Demo Net/)).toBeInTheDocument();
+    expect(screen.getAllByText("不可用")).toHaveLength(1);
     expect(screen.getByTestId("flag-SG")).toBeInTheDocument();
 
     const panel = screen.getByTestId("visitor-info-panel");
