@@ -81,6 +81,18 @@ describe("VisitorInfoPanel", () => {
     expect(await screen.findByText("访客信息")).toBeInTheDocument();
     expect(screen.getByText("获取失败")).toBeInTheDocument();
     expect(screen.getAllByText("不可用").length).toBeGreaterThan(0);
+
+    const panel = screen.getByTestId("visitor-info-panel");
+    const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    await waitFor(() => {
+      expect(panel).toHaveAttribute("data-state", "open");
+      expect(reopenButton).toHaveAttribute("data-state", "hidden");
+    });
   });
 
   it("shows latency fallback when ip info succeeds but latency checks fail", async () => {
@@ -103,5 +115,17 @@ describe("VisitorInfoPanel", () => {
     expect(await screen.findByText("198.51.100.9")).toBeInTheDocument();
     expect(screen.getByText("不可用")).toBeInTheDocument();
     expect(screen.getByTestId("flag-SG")).toBeInTheDocument();
+
+    const panel = screen.getByTestId("visitor-info-panel");
+    const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    await waitFor(() => {
+      expect(panel).toHaveAttribute("data-state", "open");
+      expect(reopenButton).toHaveAttribute("data-state", "hidden");
+    });
   });
 });
