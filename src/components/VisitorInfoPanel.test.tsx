@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import VisitorInfoPanel from "@/components/VisitorInfoPanel";
 
@@ -16,7 +16,7 @@ describe("VisitorInfoPanel", () => {
     global.fetch = originalFetch;
   });
 
-  it("shows visitor info, auto-hides after success, and reopens from the compact button", async () => {
+  it("shows the country flag in the title, keeps long location text readable, auto-hides after success, and reopens from the compact button", async () => {
     vi.useFakeTimers();
 
     let now = 0;
@@ -31,8 +31,8 @@ describe("VisitorInfoPanel", () => {
         ok: true,
         json: async () => ({
           ip: "203.0.113.7",
-          city: "Tokyo",
-          country: "JP",
+          city: "Buenos Aires Autonomous City",
+          country: "AR",
           org: "AS12345 Example Telecom",
         }),
       } as Response)
@@ -46,13 +46,16 @@ describe("VisitorInfoPanel", () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
-    expect(screen.getByText("访客信息")).toBeInTheDocument();
-    expect(screen.getByText("203.0.113.7")).toBeInTheDocument();
-    expect(screen.getByText(/Tokyo/)).toBeInTheDocument();
-    expect(screen.getByText(/Example Telecom/)).toBeInTheDocument();
-
     const panel = screen.getByTestId("visitor-info-panel");
-    expect(within(panel).getByTestId("flag-JP")).toBeInTheDocument();
+
+    expect(within(panel).getByText("访客信息")).toBeInTheDocument();
+    expect(within(panel).getByTestId("flag-AR")).toBeInTheDocument();
+    expect(within(panel).getByText("IP 地址")).toBeInTheDocument();
+    expect(within(panel).getByText("地理位置")).toBeInTheDocument();
+    expect(within(panel).getByText("203.0.113.7")).toBeInTheDocument();
+    expect(within(panel).getByText(/Buenos Aires Autonomous City/)).toBeInTheDocument();
+    expect(within(panel).getByText(/Example Telecom/)).toBeInTheDocument();
+    expect(within(panel).queryByText("运营商")).not.toBeInTheDocument();
 
     const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
 
@@ -82,7 +85,7 @@ describe("VisitorInfoPanel", () => {
     expect(screen.getByText("访客信息")).toBeInTheDocument();
     expect(screen.getByText("IP 地址")).toBeInTheDocument();
     expect(screen.getByText("地理位置")).toBeInTheDocument();
-    expect(screen.getByText("运营商")).toBeInTheDocument();
+    expect(screen.queryByText("运营商")).not.toBeInTheDocument();
 
     const panel = screen.getByTestId("visitor-info-panel");
     const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });

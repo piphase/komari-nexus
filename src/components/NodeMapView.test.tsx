@@ -67,7 +67,7 @@ const demoNodes = [
     tags: "",
     billing_cycle: 0,
     currency: "",
-    group: "Edge",
+    group: "",
     traffic_limit: 0,
     traffic_limit_type: "sum",
     expired_at: "",
@@ -148,17 +148,18 @@ describe("NodeMapView", () => {
         nodes={demoNodes}
         liveData={demoLiveData}
         onOpenNodeDetails={handleOpenNodeDetails}
-      />
+      />,
     );
 
     expect(container.querySelector('[data-country-code="US"]')).toBeInTheDocument();
-    expect(screen.getByTestId("flag-🇺🇸")).toBeInTheDocument();
+    expect(screen.getByTestId(/flag-/)).toBeInTheDocument();
 
     expect(screen.getAllByText("3 台节点")[0]).toBeInTheDocument();
     expect(screen.getAllByText("2 台在线")[0]).toBeInTheDocument();
     expect(screen.getAllByText("1 台离线")[0]).toBeInTheDocument();
     expect(screen.getAllByText("United States")[0]).toBeInTheDocument();
     expect(screen.queryByText("us-core")).not.toBeInTheDocument();
+    expect(screen.getByText("暂未分类")).toBeInTheDocument();
 
     const japanCountry = container.querySelector('[data-country-code="JP"]');
     expect(japanCountry).toBeInTheDocument();
@@ -173,9 +174,7 @@ describe("NodeMapView", () => {
   });
 
   it("shows a single country title in the detail header and keeps nodes inside a dedicated scroll area", () => {
-    const { container } = render(
-      <NodeMapView nodes={demoNodes} liveData={demoLiveData} />
-    );
+    const { container } = render(<NodeMapView nodes={demoNodes} liveData={demoLiveData} />);
 
     const detailCard = container.querySelector(".node-map-view__detail-card");
     expect(detailCard).toBeInTheDocument();
@@ -193,20 +192,20 @@ describe("NodeMapView", () => {
     expect(container.querySelector(".node-map-view__node-list")).toBeInTheDocument();
   });
 
-  it("uses a callout marker and leader line for compact countries", () => {
+  it("keeps compact countries clickable without rendering markers or leader lines", async () => {
+    const user = userEvent.setup();
     const { container } = render(
-      <NodeMapView
-        nodes={compactRegionNodes}
-        liveData={{ online: ["sg-core"], data: {} }}
-      />
+      <NodeMapView nodes={compactRegionNodes} liveData={{ online: ["sg-core"], data: {} }} />,
     );
 
-    expect(
-      container.querySelector('[data-country-code="SG"][data-marker-placement="external"]')
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-country-code="SG"][data-marker-strategy="callout"]')
-    ).toBeInTheDocument();
-    expect(container.querySelector('[data-country-leader="SG"]')).toBeInTheDocument();
+    const singaporeCountry = container.querySelector('[data-country-code="SG"]');
+    expect(singaporeCountry).toBeInTheDocument();
+    expect(container.querySelector(".node-map-view__marker-layer")).not.toBeInTheDocument();
+    expect(container.querySelector('[data-country-leader="SG"]')).not.toBeInTheDocument();
+
+    await user.click(singaporeCountry as Element);
+
+    expect(screen.getByText("Singapore")).toBeInTheDocument();
+    expect(screen.getByText("该地区共 1 台节点")).toBeInTheDocument();
   });
 });

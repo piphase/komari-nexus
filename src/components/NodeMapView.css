@@ -10,7 +10,7 @@
 
 @media (min-width: 1024px) {
   .node-map-view__layout {
-    grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.78fr);
+    grid-template-columns: minmax(0, 2.35fr) minmax(260px, 0.72fr);
   }
 }
 
@@ -87,83 +87,6 @@
 .node-map-view__country.is-selected {
   stroke-width: 1.6;
   filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.12));
-}
-
-.node-map-view__country-leader {
-  fill: none;
-  stroke-width: 2.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.98;
-  pointer-events: none;
-  vector-effect: non-scaling-stroke;
-  filter:
-    drop-shadow(0 0 1px rgba(255, 255, 255, 0.96))
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
-}
-
-.node-map-view__country-leader.status-online {
-  stroke: rgba(5, 150, 105, 0.95);
-}
-
-.node-map-view__country-leader.status-partial {
-  stroke: rgba(217, 119, 6, 0.95);
-}
-
-.node-map-view__country-leader.status-offline {
-  stroke: rgba(225, 29, 72, 0.92);
-}
-
-.node-map-view__country-leader.is-selected {
-  stroke-width: 2.4;
-  filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.14));
-}
-
-.node-map-view__country-marker {
-  cursor: pointer;
-}
-
-.node-map-view__country-marker circle {
-  fill: rgba(15, 23, 42, 0.1);
-  stroke: rgba(255, 255, 255, 0.96);
-  stroke-width: 3;
-  transition: transform 180ms ease, filter 180ms ease;
-}
-
-.node-map-view__country-marker text {
-  fill: white;
-  font-size: 10px;
-  font-weight: 700;
-  text-anchor: middle;
-  pointer-events: none;
-}
-
-.node-map-view__country-marker.status-online circle {
-  fill: #10b981;
-}
-
-.node-map-view__country-marker.status-partial circle {
-  fill: #f59e0b;
-}
-
-.node-map-view__country-marker.status-offline circle {
-  fill: #f43f5e;
-}
-
-.node-map-view__country-marker[data-marker-placement="external"] circle {
-  stroke-width: 4;
-}
-
-.node-map-view__country-marker[data-marker-strategy="callout"] circle {
-  filter:
-    drop-shadow(0 10px 18px rgba(15, 23, 42, 0.14))
-    drop-shadow(0 0 0 rgba(255, 255, 255, 0.9));
-}
-
-.node-map-view__country-marker:hover circle,
-.node-map-view__country-marker.is-selected circle {
-  transform: scale(1.08);
-  filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.22));
 }
 
 .node-map-view__legend {

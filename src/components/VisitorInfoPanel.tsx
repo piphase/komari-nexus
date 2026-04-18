@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Globe, MapPin, Wifi } from "lucide-react";
+import { Activity, Globe, MapPin } from "lucide-react";
 
 import Flag from "@/components/Flag";
 
@@ -9,6 +9,12 @@ const AUTO_HIDE_DELAY = 5000;
 const INFO_ENDPOINT = "https://ipinfo.io/json";
 const LATENCY_ENDPOINT = "https://www.google.com/generate_204";
 const UNAVAILABLE = "不可用";
+const FETCH_FAILED = "获取失败";
+const PANEL_TITLE = "访客信息";
+const LATENCY_LABEL = "延迟";
+const IP_LABEL = "IP 地址";
+const LOCATION_LABEL = "地理位置";
+const REOPEN_LABEL = "重新展开访客信息";
 
 type VisitorInfoPayload = {
   ip?: string;
@@ -27,7 +33,7 @@ type VisitorInfoState = {
 };
 
 const DEFAULT_STATE: VisitorInfoState = {
-  ip: "获取失败",
+  ip: FETCH_FAILED,
   location: UNAVAILABLE,
   countryCode: null,
   organization: UNAVAILABLE,
@@ -167,7 +173,7 @@ export default function VisitorInfoPanel() {
       }
     };
 
-    load();
+    void load();
 
     return () => {
       cancelled = true;
@@ -228,12 +234,16 @@ export default function VisitorInfoPanel() {
       >
         <div className="space-y-4 p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Activity className="h-4 w-4 text-primary" />
-              <span>访客信息</span>
+            <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+              {state.countryCode ? (
+                <Flag flag={state.countryCode} size="5" />
+              ) : (
+                <Activity className="h-4 w-4 text-primary" />
+              )}
+              <span>{PANEL_TITLE}</span>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${latencyTone}`}>
-              延迟 {state.latency}
+              {LATENCY_LABEL} {state.latency}
             </span>
           </div>
 
@@ -241,28 +251,23 @@ export default function VisitorInfoPanel() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Globe className="h-4 w-4" />
-                <span>IP 地址</span>
+                <span>{IP_LABEL}</span>
               </div>
               <span className="font-mono text-right text-foreground">{state.ip}</span>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-2 pt-0.5 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>地理位置</span>
+                <span>{LOCATION_LABEL}</span>
               </div>
-              <div className="flex max-w-[12rem] items-center gap-2 text-right text-foreground">
-                {state.countryCode ? <Flag flag={state.countryCode} size="5" /> : null}
-                <span className="truncate">{state.location}</span>
+              <div className="max-w-[13.5rem] text-right text-foreground">
+                <span className="line-clamp-2 break-words">{state.location}</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-muted/60 px-4 py-3 text-sm">
-            <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-              <Wifi className="h-4 w-4" />
-              <span>运营商</span>
-            </div>
+          <div className="rounded-2xl bg-slate-100/85 px-4 py-3 text-center text-sm text-slate-700">
             <div className="break-words font-medium text-foreground">{state.organization}</div>
           </div>
         </div>
@@ -270,7 +275,7 @@ export default function VisitorInfoPanel() {
 
       <button
         type="button"
-        aria-label="重新展开访客信息"
+        aria-label={REOPEN_LABEL}
         data-state={open ? "hidden" : "visible"}
         onClick={reopen}
         className={[
