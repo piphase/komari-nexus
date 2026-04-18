@@ -114,5 +114,34 @@ describe("VisitorInfoPanel", () => {
 
     const panel = screen.getByTestId("visitor-info-panel");
     expect(within(panel).getByTestId("flag-SG")).toBeInTheDocument();
+
+    const [, infoInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, latencyInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+
+    expect(infoInit.signal).toBeInstanceOf(AbortSignal);
+    expect(latencyInit.signal).toBe(infoInit.signal);
+  });
+
+  it("aborts in-flight requests on unmount", () => {
+    const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>(() => {}));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { unmount } = render(<VisitorInfoPanel />);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const signal = init.signal as AbortSignal;
+
+    expect(signal.aborted).toBe(false);
+
+    unmount();
+
+    expect(signal.aborted).toBe(true);
   });
 });

@@ -51,13 +51,14 @@ const buildLocation = (city?: string, country?: string) => {
   return countryName || city || UNAVAILABLE;
 };
 
-const measureLatency = async () => {
+const measureLatency = async (signal: AbortSignal) => {
   const samples: number[] = [];
 
   try {
     await fetch(`${LATENCY_ENDPOINT}?warm=${Date.now()}`, {
       cache: "no-store",
       mode: "no-cors",
+      signal,
     });
   } catch {}
 
@@ -67,6 +68,7 @@ const measureLatency = async () => {
       await fetch(`${LATENCY_ENDPOINT}?sample=${index}-${Date.now()}`, {
         cache: "no-store",
         mode: "no-cors",
+        signal,
       });
       samples.push(performance.now() - startedAt);
     } catch {}
@@ -94,6 +96,7 @@ export default function VisitorInfoPanel() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     const clearAutoHide = () => {
       if (timerRef.current) {
@@ -111,7 +114,10 @@ export default function VisitorInfoPanel() {
 
     const load = async () => {
       try {
-        const response = await fetch(INFO_ENDPOINT, { cache: "no-store" });
+        const response = await fetch(INFO_ENDPOINT, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error(`ipinfo ${response.status}`);
         }
@@ -132,7 +138,7 @@ export default function VisitorInfoPanel() {
         });
         startAutoHide();
 
-        void measureLatency().then((latency) => {
+        void measureLatency(controller.signal).then((latency) => {
           if (cancelled) {
             return;
           }
@@ -149,6 +155,10 @@ export default function VisitorInfoPanel() {
           });
         });
       } catch {
+        if (controller.signal.aborted) {
+          return;
+        }
+
         if (!cancelled) {
           clearAutoHide();
           setOpen(true);
@@ -161,6 +171,7 @@ export default function VisitorInfoPanel() {
 
     return () => {
       cancelled = true;
+      controller.abort();
       clearAutoHide();
     };
   }, []);
