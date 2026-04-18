@@ -1,17 +1,17 @@
-# Komari-Next
+# Komari Nexus
 
-Komari-Next 是 Komari 监控项目的现代化前端。
+Komari Nexus 是一个基于 KomariNext 二次开发的 Komari 主题。
 它基于 **Next.js**、**TypeScript**、**Tailwind CSS** 和 **Shadcn UI** 构建，并被打包为静态站点，可作为 Komari 的主题使用。
 
 [演示站点](https://probes.top)
 
-[下载主题文件](https://github.com/tonyliuzj/komari-next/releases/latest/download/dist-release.zip)
+[仓库地址](https://github.com/strayplace/komari-next)
 
 > 该仓库仅包含前端。你需要一个正在运行的 Komari 后端实例供 UI 进行通信。或者你也可以下载主题文件并通过 Komari 的管理后台上传（推荐这种方式）。
 
-![dark-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/dark-theme.png?raw=true)
-![colour-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/show-theme.png?raw=true)
-![layout-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/layout-theme.png?raw=true)
+![dark-theme](https://github.com/strayplace/komari-next/blob/main/images/dark-theme.png?raw=true)
+![colour-theme](https://github.com/strayplace/komari-next/blob/main/images/show-theme.png?raw=true)
+![layout-theme](https://github.com/strayplace/komari-next/blob/main/images/layout-theme.png?raw=true)
 
 ## 功能特性
 

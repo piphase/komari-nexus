@@ -1,19 +1,19 @@
-# Komari-Next
+# Komari Nexus
 
-Komari-Next is a modern frontend for the Komari monitoring project.  
+Komari Nexus is a customized Komari theme based on [KomariNext](https://github.com/tonyliuzj/komari-next).  
 It is built with **Next.js**, **TypeScript**, **Tailwind CSS** and **Shadcn UI** and packaged as a static site that can be used as a Komari theme.
 
-[中文](https://github.com/tonyliuzj/komari-next/blob/main/README-CN.md)
+[中文](https://github.com/strayplace/komari-next/blob/main/README-CN.md)
 
-[Demo](https://probes.top)
+[Repository](https://github.com/strayplace/komari-next)
 
-[Download theme file](https://github.com/tonyliuzj/komari-next/releases/latest/download/dist-release.zip)
+[Original Project](https://github.com/tonyliuzj/komari-next)
 
 > This repository contains only the frontend. You will need a running Komari backend instance for the UI to talk to. Or you can download the theme file and upload it through Komari's admin dashboard, this would be the recommanded way.
 
-![dark-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/dark-theme.png?raw=true)
-![colour-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/show-theme.png?raw=true)
-![layout-theme](https://github.com/tonyliuzj/komari-next/blob/main/images/layout-theme.png?raw=true)
+![dark-theme](https://github.com/strayplace/komari-next/blob/main/images/dark-theme.png?raw=true)
+![colour-theme](https://github.com/strayplace/komari-next/blob/main/images/show-theme.png?raw=true)
+![layout-theme](https://github.com/strayplace/komari-next/blob/main/images/layout-theme.png?raw=true)
 
 ## Features
 
@@ -47,7 +47,7 @@ It is built with **Next.js**, **TypeScript**, **Tailwind CSS** and **Shadcn UI**
 
 ## Getting Started
 
-- Simply [download theme file](https://github.com/tonyliuzj/komari-next/releases/latest/download/dist-release.zip) and upload it through Komari's admin dashboard, this would be the recommanded way.
+- Build your own theme package from this fork and upload it through Komari's admin dashboard.
 
 ## Dev
 
@@ -117,6 +117,10 @@ This repository is designed to be used as a custom Komari theme.
 Contributions are welcome.  
 If you find issues or have ideas for improvements, feel free to open an issue or submit a pull request.
 
+## Attribution
+
+Komari Nexus is independently maintained, but it is based on the original [KomariNext](https://github.com/tonyliuzj/komari-next) project by Tony Liu.
+
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tonyliuzj/komari-next&type=date&legend=top-left)](https://www.star-history.com/#tonyliuzj/komari-next&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=strayplace/komari-next&type=date&legend=top-left)](https://www.star-history.com/#strayplace/komari-next&type=date&legend=top-left)
