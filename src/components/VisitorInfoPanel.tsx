@@ -221,7 +221,7 @@ export default function VisitorInfoPanel() {
         onMouseEnter={pauseAutoHide}
         onMouseLeave={restartAutoHide}
         className={[
-          "fixed bottom-6 left-4 z-[70] w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70",
+          "fixed bottom-6 left-4 z-40 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70",
           "bg-background/90 shadow-2xl backdrop-blur-xl transition-transform duration-500",
           open ? "translate-x-0" : "-translate-x-[120%]",
         ].join(" ")}
@@ -274,7 +274,7 @@ export default function VisitorInfoPanel() {
         data-state={open ? "hidden" : "visible"}
         onClick={reopen}
         className={[
-          "fixed bottom-6 left-4 z-[71] flex h-11 w-11 items-center justify-center rounded-full border border-border/70",
+          "fixed bottom-6 left-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/70",
           "bg-background/90 shadow-lg backdrop-blur-xl transition-all duration-300",
           open
             ? "pointer-events-none scale-90 opacity-0"
