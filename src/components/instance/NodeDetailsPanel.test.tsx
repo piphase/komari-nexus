@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NodeDetailsContent } from "@/components/instance/NodeDetailsContent";
+import { NodeDetailsPanel } from "@/components/instance/NodeDetailsPanel";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -48,6 +50,10 @@ vi.mock("@/contexts/LiveDataContext", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
+
 vi.mock("@/components/DetailsGrid", () => ({
   DetailsGrid: ({ uuid }: { uuid: string }) => <div>details-grid:{uuid}</div>,
 }));
@@ -79,5 +85,43 @@ describe("NodeDetailsContent", () => {
 
     expect(screen.getByText("Demo Node")).toBeInTheDocument();
     expect(screen.getByText("demo-node")).toBeInTheDocument();
+  });
+});
+
+describe("NodeDetailsPanel", () => {
+  it("renders reusable details when open", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => undefined))
+    );
+
+    render(
+      <NodeDetailsPanel open onOpenChange={() => undefined} uuid="demo-node" />
+    );
+
+    expect(screen.getByText("Demo Node")).toBeInTheDocument();
+    expect(screen.getByText("demo-node")).toBeInTheDocument();
+  });
+
+  it("calls onOpenChange(false) when close is pressed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => undefined))
+    );
+
+    const user = userEvent.setup();
+    const states: boolean[] = [];
+
+    render(
+      <NodeDetailsPanel
+        open
+        onOpenChange={(next) => states.push(next)}
+        uuid="demo-node"
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    expect(states).toContain(false);
   });
 });
