@@ -5,6 +5,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData } from "../types/LiveData";
 import { NodeGrid } from "./Node";
+import { NodeMapView } from "./NodeMapView";
 import { NodeDetailsPanel } from "./instance/NodeDetailsPanel";
 const NodeTable = React.lazy(() => import("./NodeTable"));
 import { isRegionMatch } from "@/utils/regionHelper";
@@ -265,19 +266,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               onOpenNodeDetails={handleOpenNodeDetails}
             />
           ) : viewMode === "map" ? (
-            <div className="rounded-2xl border bg-card/95 p-8 shadow-sm">
-              <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  {t("mapView.title", { defaultValue: "Global Distribution" })}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t("mapView.servers", {
-                    count: filteredNodes.length,
-                    defaultValue: `${filteredNodes.length} servers`,
-                  })}
-                </p>
-              </div>
-            </div>
+            <NodeMapView nodes={filteredNodes} liveData={liveData} />
           ) : (
             <Suspense
               fallback={<div className="p-4 text-center">Loading table...</div>}
