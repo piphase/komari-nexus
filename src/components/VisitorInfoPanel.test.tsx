@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import VisitorInfoPanel from "@/components/VisitorInfoPanel";
 
@@ -16,57 +16,61 @@ describe("VisitorInfoPanel", () => {
     global.fetch = originalFetch;
   });
 
-  it(
-    "shows visitor info, auto-hides after success, and reopens from the compact button",
-    async () => {
-      let now = 0;
-      vi.spyOn(performance, "now").mockImplementation(() => {
-        now += 48;
-        return now;
-      });
+  it("shows visitor info, auto-hides after success, and reopens from the compact button", async () => {
+    vi.useFakeTimers();
 
-      const fetchMock = vi
-        .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            ip: "203.0.113.7",
-            city: "Tokyo",
-            country: "JP",
-            org: "AS12345 Example Telecom",
-          }),
-        } as Response)
-        .mockResolvedValue({ ok: true } as Response);
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => {
+      now += 48;
+      return now;
+    });
 
-      global.fetch = fetchMock as unknown as typeof fetch;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ip: "203.0.113.7",
+          city: "Tokyo",
+          country: "JP",
+          org: "AS12345 Example Telecom",
+        }),
+      } as Response)
+      .mockResolvedValue({ ok: true } as Response);
 
-      render(<VisitorInfoPanel />);
+    global.fetch = fetchMock as unknown as typeof fetch;
 
-      expect(await screen.findByText("访客信息")).toBeInTheDocument();
-      expect(await screen.findByText("203.0.113.7")).toBeInTheDocument();
-      expect(screen.getByText(/Tokyo/)).toBeInTheDocument();
-      expect(screen.getByText(/Example Telecom/)).toBeInTheDocument();
+    render(<VisitorInfoPanel />);
 
-      const panel = screen.getByTestId("visitor-info-panel");
-      expect(within(panel).getByTestId("flag-JP")).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
-      const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
+    expect(screen.getByText("访客信息")).toBeInTheDocument();
+    expect(screen.getByText("203.0.113.7")).toBeInTheDocument();
+    expect(screen.getByText(/Tokyo/)).toBeInTheDocument();
+    expect(screen.getByText(/Example Telecom/)).toBeInTheDocument();
 
-      expect(panel).toHaveAttribute("data-state", "open");
-      expect(reopenButton).toHaveAttribute("data-state", "hidden");
+    const panel = screen.getByTestId("visitor-info-panel");
+    expect(within(panel).getByTestId("flag-JP")).toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(panel).toHaveAttribute("data-state", "closed");
-        expect(reopenButton).toHaveAttribute("data-state", "visible");
-      }, { timeout: 6500 });
+    const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
 
-      fireEvent.click(reopenButton);
+    expect(panel).toHaveAttribute("data-state", "open");
+    expect(reopenButton).toHaveAttribute("data-state", "hidden");
 
-      expect(panel).toHaveAttribute("data-state", "open");
-      expect(reopenButton).toHaveAttribute("data-state", "hidden");
-    },
-    10000,
-  );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(panel).toHaveAttribute("data-state", "closed");
+    expect(reopenButton).toHaveAttribute("data-state", "visible");
+
+    fireEvent.click(reopenButton);
+
+    expect(panel).toHaveAttribute("data-state", "open");
+    expect(reopenButton).toHaveAttribute("data-state", "hidden");
+  }, 10000);
 
   it("keeps the panel visible and avoids auto-hide scheduling when metadata fails", async () => {
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
