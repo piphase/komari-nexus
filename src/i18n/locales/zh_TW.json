@@ -263,6 +263,7 @@
     "help": "幫助",
     "home": "主頁",
     "long_term": "長期",
+    "map": "地圖",
     "monthly": "月",
     "name": "名稱",
     "none": "無",
@@ -346,6 +347,12 @@
   },
   "logs": {
     "title": "日誌"
+  },
+  "mapView": {
+    "title": "全球分布",
+    "servers": "{{count}} 台節點",
+    "online": "{{count}} 台在線",
+    "offline": "{{count}} 台離線"
   },
   "network_speed": "網路速率",
   "nodeCard": {

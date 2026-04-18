@@ -263,6 +263,7 @@
     "help": "帮助",
     "home": "主页",
     "long_term": "长期",
+    "map": "地图",
     "monthly": "月",
     "name": "名称",
     "none": "无",
@@ -346,6 +347,12 @@
   },
   "logs": {
     "title": "日志"
+  },
+  "mapView": {
+    "title": "全球分布",
+    "servers": "{{count}} 台节点",
+    "online": "{{count}} 台在线",
+    "offline": "{{count}} 台离线"
   },
   "network_speed": "网络速率",
   "nodeCard": {

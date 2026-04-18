@@ -263,6 +263,7 @@
     "help": "ヘルプ",
     "home": "ホーム",
     "long_term": "長期",
+    "map": "マップ",
     "monthly": "月",
     "name": "名前",
     "none": "なし",
@@ -346,6 +347,12 @@
   },
   "logs": {
     "title": "ログ"
+  },
+  "mapView": {
+    "title": "グローバル分布",
+    "servers": "サーバー {{count}} 台",
+    "online": "オンライン {{count}} 台",
+    "offline": "オフライン {{count}} 台"
   },
   "network_speed": "ネットワーク速度",
   "nodeCard": {

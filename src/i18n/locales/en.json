@@ -263,6 +263,7 @@
     "help": "Help",
     "home": "Home",
     "long_term": "Long term",
+    "map": "Map",
     "monthly": "Monthly",
     "name": "Name",
     "none": "None",
@@ -346,6 +347,12 @@
   },
   "logs": {
     "title": "Logs"
+  },
+  "mapView": {
+    "title": "Global Distribution",
+    "servers": "{{count}} servers",
+    "online": "{{count}} online",
+    "offline": "{{count}} offline"
   },
   "network_speed": "Network Speed",
   "nodeCard": {

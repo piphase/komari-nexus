@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, Suspense } from "react";
-import { Search, Grid3X3, Table2, X } from "lucide-react";
+import { Search, Grid3X3, Table2, Map as MapIcon, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-export type ViewMode = "grid" | "table";
+export type ViewMode = "grid" | "table" | "map";
 
 interface NodeDisplayProps {
   nodes: NodeBasicInfo[];
@@ -171,6 +171,17 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               <Table2 className="h-4 w-4" />
               <span className="hidden sm:inline">Table</span>
             </Button>
+            <Button
+              variant={viewMode === "map" ? "secondary" : "ghost"}
+              size="sm"
+              className={cn("h-8 gap-2 px-3", viewMode === "map" && "bg-card shadow-sm")}
+              onClick={() => setViewMode("map")}
+            >
+              <MapIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {t("common.map", { defaultValue: "Map" })}
+              </span>
+            </Button>
           </div>
         </div>
       </div>
@@ -253,6 +264,20 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               liveData={liveData}
               onOpenNodeDetails={handleOpenNodeDetails}
             />
+          ) : viewMode === "map" ? (
+            <div className="rounded-2xl border bg-card/95 p-8 shadow-sm">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {t("mapView.title", { defaultValue: "Global Distribution" })}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t("mapView.servers", {
+                    count: filteredNodes.length,
+                    defaultValue: `${filteredNodes.length} servers`,
+                  })}
+                </p>
+              </div>
+            </div>
           ) : (
             <Suspense
               fallback={<div className="p-4 text-center">Loading table...</div>}

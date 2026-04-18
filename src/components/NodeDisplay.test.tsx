@@ -134,6 +134,17 @@ const demoLiveData = {
 } as const;
 
 describe("NodeDisplay classic cards", () => {
+  it("shows map as a third node view", () => {
+    render(
+      <NodeDisplay
+        nodes={[demoNode]}
+        liveData={demoLiveData}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /map/i })).toBeInTheDocument();
+  });
+
   it("opens details when a classic card is clicked", async () => {
     const user = userEvent.setup();
 

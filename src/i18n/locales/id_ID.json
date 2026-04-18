@@ -263,6 +263,7 @@
     "help": "Bantuan",
     "home": "Beranda",
     "long_term": "Jangka Panjang",
+    "map": "Peta",
     "monthly": "Bulanan",
     "name": "Nama",
     "none": "Tidak ada",
@@ -346,6 +347,12 @@
   },
   "logs": {
     "title": "Log"
+  },
+  "mapView": {
+    "title": "Distribusi Global",
+    "servers": "{{count}} server",
+    "online": "{{count}} online",
+    "offline": "{{count}} offline"
   },
   "network_speed": "Kecepatan Jaringan",
   "nodeCard": {
