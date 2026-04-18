@@ -5,6 +5,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData } from "../types/LiveData";
 import { NodeGrid } from "./Node";
+import { NodeDetailsPanel } from "./instance/NodeDetailsPanel";
 const NodeTable = React.lazy(() => import("./NodeTable"));
 import { isRegionMatch } from "@/utils/regionHelper";
 import "./NodeDisplay.css";
@@ -32,7 +33,21 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
     "nodeSelectedGroup",
     "all"
   );
+  const [selectedNodeUuid, setSelectedNodeUuid] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenNodeDetails = (uuid: string) => {
+    setSelectedNodeUuid(uuid);
+    setDetailsOpen(true);
+  };
+
+  const handleDetailsOpenChange = (open: boolean) => {
+    setDetailsOpen(open);
+    if (!open) {
+      setSelectedNodeUuid(null);
+    }
+  };
 
   // 获取所有的分组
   const groups = useMemo(() => {
@@ -233,7 +248,11 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
       ) : (
         <>
           {viewMode === "grid" ? (
-            <NodeGrid nodes={filteredNodes} liveData={liveData} />
+            <NodeGrid
+              nodes={filteredNodes}
+              liveData={liveData}
+              onOpenNodeDetails={handleOpenNodeDetails}
+            />
           ) : (
             <Suspense
               fallback={<div className="p-4 text-center">Loading table...</div>}
@@ -243,6 +262,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           )}
         </>
       )}
+
+      <NodeDetailsPanel
+        open={detailsOpen}
+        onOpenChange={handleDetailsOpenChange}
+        uuid={selectedNodeUuid}
+      />
     </div>
   );
 };
