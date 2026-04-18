@@ -8,6 +8,7 @@ import Flag from "@/components/Flag";
 const AUTO_HIDE_DELAY = 5000;
 const INFO_ENDPOINT = "https://ipinfo.io/json";
 const LATENCY_ENDPOINT = "https://www.google.com/generate_204";
+const UNAVAILABLE = "不可用";
 
 type VisitorInfoPayload = {
   ip?: string;
@@ -27,10 +28,10 @@ type VisitorInfoState = {
 
 const DEFAULT_STATE: VisitorInfoState = {
   ip: "获取失败",
-  location: "不可用",
+  location: UNAVAILABLE,
   countryCode: null,
-  organization: "不可用",
-  latency: "不可用",
+  organization: UNAVAILABLE,
+  latency: UNAVAILABLE,
   failed: true,
 };
 
@@ -41,13 +42,13 @@ const buildLocation = (city?: string, country?: string) => {
   const countryCode = sanitizeCountryCode(country);
   const countryName = countryCode
     ? new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ?? countryCode
-    : country ?? "不可用";
+    : country ?? UNAVAILABLE;
 
   if (city && countryName) {
     return `${city}, ${countryName}`;
   }
 
-  return countryName || city || "不可用";
+  return countryName || city || UNAVAILABLE;
 };
 
 const measureLatency = async () => {
@@ -72,7 +73,7 @@ const measureLatency = async () => {
   }
 
   if (samples.length === 0) {
-    return "不可用";
+    return UNAVAILABLE;
   }
 
   if (samples.length > 1) {
@@ -94,10 +95,15 @@ export default function VisitorInfoPanel() {
   useEffect(() => {
     let cancelled = false;
 
-    const startAutoHide = () => {
+    const clearAutoHide = () => {
       if (timerRef.current) {
         window.clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
+    };
+
+    const startAutoHide = () => {
+      clearAutoHide();
       timerRef.current = window.setTimeout(() => {
         setOpen(false);
       }, AUTO_HIDE_DELAY);
@@ -111,23 +117,42 @@ export default function VisitorInfoPanel() {
         }
 
         const payload = (await response.json()) as VisitorInfoPayload;
-        const latency = await measureLatency();
 
-        if (!cancelled) {
-          setState({
-            ip: payload.ip || "不可用",
-            location: buildLocation(payload.city, payload.country),
-            countryCode: sanitizeCountryCode(payload.country),
-            organization: payload.org || "不可用",
-            latency,
-            failed: false,
-          });
-          startAutoHide();
+        if (cancelled) {
+          return;
         }
+
+        setState({
+          ip: payload.ip || UNAVAILABLE,
+          location: buildLocation(payload.city, payload.country),
+          countryCode: sanitizeCountryCode(payload.country),
+          organization: payload.org || UNAVAILABLE,
+          latency: UNAVAILABLE,
+          failed: false,
+        });
+        startAutoHide();
+
+        void measureLatency().then((latency) => {
+          if (cancelled) {
+            return;
+          }
+
+          setState((current) => {
+            if (current.failed) {
+              return current;
+            }
+
+            return {
+              ...current,
+              latency,
+            };
+          });
+        });
       } catch {
         if (!cancelled) {
+          clearAutoHide();
+          setOpen(true);
           setState(DEFAULT_STATE);
-          startAutoHide();
         }
       }
     };
@@ -136,14 +161,12 @@ export default function VisitorInfoPanel() {
 
     return () => {
       cancelled = true;
-      if (timerRef.current) {
-        window.clearTimeout(timerRef.current);
-      }
+      clearAutoHide();
     };
   }, []);
 
   const latencyTone = useMemo(() => {
-    if (state.latency === "不可用") {
+    if (state.latency === UNAVAILABLE) {
       return "bg-muted text-muted-foreground";
     }
 
@@ -156,13 +179,19 @@ export default function VisitorInfoPanel() {
   const pauseAutoHide = () => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
   };
 
   const restartAutoHide = () => {
+    if (state.failed) {
+      return;
+    }
+
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
     }
+
     timerRef.current = window.setTimeout(() => {
       setOpen(false);
     }, AUTO_HIDE_DELAY);
