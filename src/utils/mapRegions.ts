@@ -1,46 +1,47 @@
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData } from "@/types/LiveData";
+import { resolveFlagCode } from "@/utils/flag";
 import { emojiToRegionMap } from "@/utils/regionHelper";
 
 type RegionStatus = "online" | "offline" | "partial";
 
-type RegionPosition = {
-  x: number;
-  y: number;
+type RegionMeta = {
+  key: string;
+  label: string;
+  mapName: string;
+  flagCode: string;
 };
 
-const mapRegionPositions: Record<string, RegionPosition> = {
-  "🇺🇸": { x: 20, y: 35 },
-  "🇨🇦": { x: 20, y: 22 },
-  "🇧🇷": { x: 31, y: 66 },
-  "🇬🇧": { x: 46, y: 28 },
-  "🇫🇷": { x: 47, y: 34 },
-  "🇩🇪": { x: 50, y: 31 },
-  "🇳🇱": { x: 49, y: 30 },
-  "🇪🇸": { x: 45, y: 39 },
-  "🇮🇹": { x: 52, y: 39 },
-  "🇷🇺": { x: 66, y: 23 },
-  "🇹🇷": { x: 57, y: 40 },
-  "🇮🇳": { x: 68, y: 50 },
-  "🇸🇬": { x: 76, y: 63 },
-  "🇭🇰": { x: 79, y: 48 },
-  "🇲🇴": { x: 78.5, y: 49.5 },
-  "🇨🇳": { x: 75, y: 43 },
-  "🇹🇼": { x: 81, y: 49 },
-  "🇯🇵": { x: 84, y: 40 },
-  "🇰🇷": { x: 81, y: 41 },
-  "🇦🇺": { x: 84, y: 77 },
-  "🇳🇿": { x: 93, y: 84 },
-  "🇿🇦": { x: 54, y: 79 },
-  "🇦🇪": { x: 62, y: 48 },
+const regionCountryMetaByFlagCode: Record<string, RegionMeta> = {
+  US: { key: "US", label: "United States", mapName: "United States of America", flagCode: "US" },
+  CA: { key: "CA", label: "Canada", mapName: "Canada", flagCode: "CA" },
+  BR: { key: "BR", label: "Brazil", mapName: "Brazil", flagCode: "BR" },
+  GB: { key: "GB", label: "United Kingdom", mapName: "United Kingdom", flagCode: "GB" },
+  FR: { key: "FR", label: "France", mapName: "France", flagCode: "FR" },
+  DE: { key: "DE", label: "Germany", mapName: "Germany", flagCode: "DE" },
+  NL: { key: "NL", label: "Netherlands", mapName: "Netherlands", flagCode: "NL" },
+  ES: { key: "ES", label: "Spain", mapName: "Spain", flagCode: "ES" },
+  IT: { key: "IT", label: "Italy", mapName: "Italy", flagCode: "IT" },
+  TR: { key: "TR", label: "Turkey", mapName: "Turkey", flagCode: "TR" },
+  RU: { key: "RU", label: "Russia", mapName: "Russia", flagCode: "RU" },
+  IN: { key: "IN", label: "India", mapName: "India", flagCode: "IN" },
+  SG: { key: "SG", label: "Singapore", mapName: "Singapore", flagCode: "SG" },
+  HK: { key: "HK", label: "Hong Kong", mapName: "Hong Kong", flagCode: "HK" },
+  MO: { key: "MO", label: "Macau", mapName: "Macao", flagCode: "MO" },
+  CN: { key: "CN", label: "China", mapName: "China", flagCode: "CN" },
+  TW: { key: "TW", label: "Taiwan", mapName: "Taiwan", flagCode: "TW" },
+  JP: { key: "JP", label: "Japan", mapName: "Japan", flagCode: "JP" },
+  KR: { key: "KR", label: "South Korea", mapName: "South Korea", flagCode: "KR" },
+  AU: { key: "AU", label: "Australia", mapName: "Australia", flagCode: "AU" },
+  ZA: { key: "ZA", label: "South Africa", mapName: "South Africa", flagCode: "ZA" },
 };
 
 export interface MapRegionSummary {
   emoji: string;
   key: string;
   label: string;
-  x: number;
-  y: number;
+  mapName: string;
+  flagCode: string;
   total: number;
   online: number;
   offline: number;
@@ -68,6 +69,26 @@ function getRegionStatus(online: number, offline: number): RegionStatus {
   return "partial";
 }
 
+function resolveRegionMeta(region: string): RegionMeta | null {
+  const flagCode = resolveFlagCode(region);
+  const predefined = regionCountryMetaByFlagCode[flagCode];
+  if (predefined) {
+    return predefined;
+  }
+
+  const regionInfo = emojiToRegionMap[region];
+  if (!regionInfo) {
+    return null;
+  }
+
+  return {
+    key: flagCode,
+    label: regionInfo.en,
+    mapName: regionInfo.en,
+    flagCode,
+  };
+}
+
 export function buildMapViewSummary(
   nodes: NodeBasicInfo[],
   liveData: LiveData
@@ -77,16 +98,14 @@ export function buildMapViewSummary(
   const unmappedNodes: NodeBasicInfo[] = [];
 
   for (const node of nodes) {
-    const regionInfo = emojiToRegionMap[node.region];
-    const position = mapRegionPositions[node.region];
+    const regionMeta = resolveRegionMeta(node.region);
 
-    if (!regionInfo || !position) {
+    if (!regionMeta) {
       unmappedNodes.push(node);
       continue;
     }
 
-    const regionKey = regionInfo.en;
-    const existing = regionMap.get(regionKey);
+    const existing = regionMap.get(regionMeta.key);
 
     if (existing) {
       existing.nodes.push(node);
@@ -100,12 +119,12 @@ export function buildMapViewSummary(
       continue;
     }
 
-    regionMap.set(regionKey, {
+    regionMap.set(regionMeta.key, {
       emoji: node.region,
-      key: regionKey,
-      label: regionInfo.en,
-      x: position.x,
-      y: position.y,
+      key: regionMeta.key,
+      label: regionMeta.label,
+      mapName: regionMeta.mapName,
+      flagCode: regionMeta.flagCode,
       total: 1,
       online: onlineSet.has(node.uuid) ? 1 : 0,
       offline: onlineSet.has(node.uuid) ? 0 : 1,

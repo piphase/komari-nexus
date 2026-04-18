@@ -1,23 +1,70 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { geoGraticule10, geoNaturalEarth1, geoPath } from "d3-geo";
 import { Globe2, MapPinned } from "lucide-react";
+import { feature } from "topojson-client";
 import { useTranslation } from "react-i18next";
 
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData } from "@/types/LiveData";
+import worldCountries50m from "@/data/world-countries-50m.json";
 import { buildMapViewSummary } from "@/utils/mapRegions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Flag from "@/components/Flag";
 
 import "./NodeMapView.css";
 
 interface NodeMapViewProps {
   nodes: NodeBasicInfo[];
   liveData: LiveData;
+  onOpenNodeDetails?: (uuid: string) => void;
 }
 
-export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
+const SVG_WIDTH = 1000;
+const SVG_HEIGHT = 560;
+const ALWAYS_MARKER_CODES = new Set(["SG", "HK", "MO", "TW"]);
+const CALLOUT_MARKERS: Record<string, { marker: [number, number]; elbow: [number, number] }> = {
+  SG: { marker: [818, 364], elbow: [785, 350] },
+  HK: { marker: [862, 292], elbow: [820, 292] },
+  MO: { marker: [882, 318], elbow: [832, 311] },
+  TW: { marker: [860, 250], elbow: [824, 258] },
+  JP: { marker: [914, 226], elbow: [870, 224] },
+  KR: { marker: [882, 262], elbow: [840, 255] },
+  GB: { marker: [520, 110], elbow: [540, 126] },
+  NL: { marker: [578, 132], elbow: [564, 145] },
+};
+const EXTERNAL_MARKER_OFFSETS: Record<string, [number, number]> = {
+  SG: [42, -20],
+  HK: [48, -18],
+  MO: [52, -8],
+  TW: [52, -12],
+  JP: [56, -2],
+  KR: [48, -8],
+  GB: [-34, -20],
+  NL: [30, -18],
+};
+
+type MarkerLayout = {
+  type: "inline" | "external";
+  strategy: "centroid" | "callout";
+  marker: [number, number];
+  leaderPath: string | null;
+};
+
+function getStatusText(status: "online" | "offline" | "partial") {
+  switch (status) {
+    case "online":
+      return "在线";
+    case "offline":
+      return "离线";
+    default:
+      return "部分在线";
+  }
+}
+
+export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewProps) {
   const { t } = useTranslation();
   const summary = useMemo(() => buildMapViewSummary(nodes, liveData), [nodes, liveData]);
   const [selectedRegionKey, setSelectedRegionKey] = useState<string | null>(summary.regions[0]?.key ?? null);
@@ -37,15 +84,121 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
   const selectedRegion =
     summary.regions.find((region) => region.key === selectedRegionKey) ?? summary.regions[0] ?? null;
 
+  const activeRegionsByMapName = useMemo(
+    () => new Map(summary.regions.map((region) => [region.mapName, region])),
+    [summary.regions]
+  );
+
+  const projectedMap = useMemo(() => {
+    const countriesGeo = feature(
+      worldCountries50m as never,
+      (worldCountries50m as unknown as { objects: { countries: never } }).objects.countries
+    ) as unknown as { features: Array<{ id?: string; properties?: { name?: string } }> };
+
+    const projection = geoNaturalEarth1().fitExtent(
+      [
+        [28, 34],
+        [SVG_WIDTH - 28, SVG_HEIGHT - 46],
+      ],
+      countriesGeo as never
+    );
+
+    const pathGenerator = geoPath(projection);
+    const spherePath = pathGenerator({ type: "Sphere" }) ?? "";
+    const graticulePath = pathGenerator(geoGraticule10()) ?? "";
+
+    const countries = countriesGeo.features
+      .map((country) => {
+        const name = country.properties?.name ?? String(country.id ?? "unknown");
+        const pathData = pathGenerator(country as never) ?? "";
+        const activeRegion = activeRegionsByMapName.get(name) ?? null;
+        const area = pathData ? pathGenerator.area(country as never) : 0;
+        const centroid = pathData ? pathGenerator.centroid(country as never) : [0, 0];
+        const bounds = pathData ? pathGenerator.bounds(country as never) : [[0, 0], [0, 0]];
+        const width = bounds[1][0] - bounds[0][0];
+        const height = bounds[1][1] - bounds[0][1];
+        const canProjectCentroid = Number.isFinite(centroid[0]) && Number.isFinite(centroid[1]);
+        const prefersExternalMarker =
+          !!activeRegion &&
+          (EXTERNAL_MARKER_OFFSETS[activeRegion.flagCode] !== undefined ||
+            width < 18 ||
+            height < 16 ||
+            area < 120);
+        const showMarker =
+          !!activeRegion &&
+          canProjectCentroid &&
+          (prefersExternalMarker || area < 180 || activeRegion.total > 2 || ALWAYS_MARKER_CODES.has(activeRegion.flagCode));
+
+        let markerLayout: MarkerLayout | null = null;
+        if (activeRegion && showMarker) {
+          const calloutAnchor = CALLOUT_MARKERS[activeRegion.flagCode];
+          if (calloutAnchor) {
+            const [markerX, markerY] = calloutAnchor.marker;
+            const [elbowX, elbowY] = calloutAnchor.elbow;
+            const directionX = markerX >= elbowX ? 1 : -1;
+            const leaderEndX = markerX - directionX * 12;
+
+            markerLayout = {
+              type: "external",
+              strategy: "callout",
+              marker: [markerX, markerY],
+              leaderPath: `M ${centroid[0].toFixed(2)} ${centroid[1].toFixed(2)} L ${elbowX.toFixed(2)} ${elbowY.toFixed(2)} L ${leaderEndX.toFixed(2)} ${markerY.toFixed(2)}`,
+            };
+          } else if (prefersExternalMarker) {
+            const [defaultDx, defaultDy] =
+              EXTERNAL_MARKER_OFFSETS[activeRegion.flagCode] ??
+              (centroid[0] < SVG_WIDTH / 2 ? [34, -22] : [-34, -22]);
+            const markerX = Math.min(Math.max(centroid[0] + defaultDx, 24), SVG_WIDTH - 24);
+            const markerY = Math.min(Math.max(centroid[1] + defaultDy, 24), SVG_HEIGHT - 28);
+            const directionX = markerX >= centroid[0] ? 1 : -1;
+            const elbowX = centroid[0] + defaultDx * 0.58;
+            const elbowY = centroid[1] + defaultDy * 0.18;
+            const leaderEndX = markerX - directionX * 10;
+
+            markerLayout = {
+              type: "external",
+              strategy: "centroid",
+              marker: [markerX, markerY],
+              leaderPath: `M ${centroid[0].toFixed(2)} ${centroid[1].toFixed(2)} L ${elbowX.toFixed(2)} ${elbowY.toFixed(2)} L ${leaderEndX.toFixed(2)} ${markerY.toFixed(2)}`,
+            };
+          } else {
+            markerLayout = {
+              type: "inline",
+              strategy: "centroid",
+              marker: [centroid[0], centroid[1]],
+              leaderPath: null,
+            };
+          }
+        }
+
+        return {
+          name,
+          pathData,
+          activeRegion,
+          area,
+          centroid,
+          showMarker,
+          markerLayout,
+        };
+      })
+      .filter((country) => country.pathData);
+
+    return {
+      spherePath,
+      graticulePath,
+      countries,
+    };
+  }, [activeRegionsByMapName]);
+
   if (!summary.regions.length) {
     return (
-      <Card className="overflow-hidden rounded-[28px] border-slate-200/80 bg-card/95 shadow-sm">
+        <Card className="overflow-hidden rounded-[28px] border-slate-200/80 bg-card/95 shadow-sm">
         <CardHeader>
-          <CardTitle>{t("mapView.title", { defaultValue: "Global Distribution" })}</CardTitle>
+          <CardTitle>{t("mapView.title", { defaultValue: "全球分布" })}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center text-sm text-muted-foreground">
-            {t("nodes.empty", { defaultValue: "No node data" })}
+            {t("nodes.empty", { defaultValue: "暂无节点数据" })}
           </div>
         </CardContent>
       </Card>
@@ -59,13 +212,16 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
               <MapPinned className="h-3.5 w-3.5" />
-              {t("common.map", { defaultValue: "Map" })}
+              {t("common.map", { defaultValue: "地图" })}
             </div>
             <CardTitle className="text-2xl tracking-tight">
-              {t("mapView.title", { defaultValue: "Global Distribution" })}
+              {t("mapView.title", { defaultValue: "全球分布" })}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              {`${summary.regions.length} active regions`}
+              {t("mapView.activeCountries", {
+                count: summary.regions.length,
+                defaultValue: `${summary.regions.length} 个活跃国家/地区`,
+              })}
             </p>
           </div>
 
@@ -73,19 +229,19 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
             <Badge variant="secondary" className="rounded-full bg-slate-100 text-slate-700">
               {t("mapView.servers", {
                 count: summary.totalNodes,
-                defaultValue: `${summary.totalNodes} servers`,
+                defaultValue: `${summary.totalNodes} 台节点`,
               })}
             </Badge>
             <Badge variant="secondary" className="rounded-full bg-emerald-50 text-emerald-700">
               {t("mapView.online", {
                 count: summary.onlineNodes,
-                defaultValue: `${summary.onlineNodes} online`,
+                defaultValue: `${summary.onlineNodes} 台在线`,
               })}
             </Badge>
             <Badge variant="secondary" className="rounded-full bg-rose-50 text-rose-700">
               {t("mapView.offline", {
                 count: summary.offlineNodes,
-                defaultValue: `${summary.offlineNodes} offline`,
+                defaultValue: `${summary.offlineNodes} 台离线`,
               })}
             </Badge>
           </div>
@@ -95,62 +251,80 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
       <CardContent className="p-5 lg:p-6">
         <div className="node-map-view__layout">
           <div className="node-map-view__surface">
-            <img
-              src="/assets/maps/world-card-map.svg"
-              alt=""
-              aria-hidden="true"
-              className="node-map-view__backdrop"
-            />
+            <svg
+              viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+              className="node-map-view__svg"
+              role="img"
+              aria-label="全球节点分布地图"
+            >
+              <path d={projectedMap.spherePath} className="node-map-view__ocean" />
+              <path d={projectedMap.graticulePath} className="node-map-view__graticule" />
 
-            <div className="node-map-view__marker-layer">
-              {summary.regions.map((region) => {
-                const size = 16 + Math.min(region.total * 5, 20);
-                const isSelected = selectedRegion?.key === region.key;
+              <g className="node-map-view__country-layer">
+                {projectedMap.countries.map((country) => {
+                  const region = country.activeRegion;
+                  const isSelected = selectedRegion?.key === region?.key;
 
-                return (
-                  <button
-                    key={region.key}
-                    type="button"
-                    className={`node-map-view__marker status-${region.status}${isSelected ? " is-selected" : ""}`}
-                    style={{
-                      left: `${region.x}%`,
-                      top: `${region.y}%`,
-                      width: `${size}px`,
-                      height: `${size}px`,
-                    }}
-                    onClick={() => setSelectedRegionKey(region.key)}
-                    aria-label={`${region.label} · ${region.total} servers`}
-                  >
-                    <span className="node-map-view__marker-count">{region.total}</span>
-                    <div className="node-map-view__tooltip">
-                      <div className="node-map-view__tooltip-title">
-                        <span>{`${region.emoji} ${region.label}`}</span>
-                      </div>
-                      <div className="node-map-view__tooltip-meta">
-                        <span>
-                          {t("mapView.servers", {
-                            count: region.total,
-                            defaultValue: `${region.total} servers`,
-                          })}
-                        </span>
-                        <span>
-                          {t("mapView.online", {
-                            count: region.online,
-                            defaultValue: `${region.online} online`,
-                          })}
-                        </span>
-                        <span>
-                          {t("mapView.offline", {
-                            count: region.offline,
-                            defaultValue: `${region.offline} offline`,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <g key={country.name} className="node-map-view__country-group">
+                      <path
+                        d={country.pathData}
+                        data-country-code={region?.flagCode}
+                        data-country-name={country.name}
+                        className={`node-map-view__country${region ? ` is-active status-${region.status}` : ""}${isSelected ? " is-selected" : ""}`}
+                        onClick={region ? () => setSelectedRegionKey(region.key) : undefined}
+                      >
+                        <title>
+                          {region
+                            ? `${region.label}: ${region.total} 台节点，${region.online} 台在线，${region.offline} 台离线`
+                            : country.name}
+                        </title>
+                      </path>
+                    </g>
+                  );
+                })}
+              </g>
+
+              <g className="node-map-view__marker-layer">
+                {projectedMap.countries.map((country) => {
+                  const region = country.activeRegion;
+                  const markerLayout = country.markerLayout;
+                  if (!region || !country.showMarker || !markerLayout) {
+                    return null;
+                  }
+
+                  const isSelected = selectedRegion?.key === region.key;
+                  const markerSize =
+                    markerLayout.type === "external"
+                      ? Math.min(11 + region.total * 1.3, 18)
+                      : Math.min(14 + region.total * 2, 24);
+
+                  return (
+                    <g key={`${country.name}-marker`} className="node-map-view__marker-group">
+                      {markerLayout.leaderPath && (
+                        <path
+                          d={markerLayout.leaderPath}
+                          data-country-leader={region.flagCode}
+                          className={`node-map-view__country-leader status-${region.status}${isSelected ? " is-selected" : ""}`}
+                        />
+                      )}
+                      <g
+                        data-country-code={region.flagCode}
+                        data-marker-placement={markerLayout.type}
+                        data-marker-strategy={markerLayout.strategy}
+                        className={`node-map-view__country-marker status-${region.status}${isSelected ? " is-selected" : ""}`}
+                        transform={`translate(${markerLayout.marker[0]}, ${markerLayout.marker[1]})`}
+                        onClick={() => setSelectedRegionKey(region.key)}
+                      >
+                        <circle r={markerSize} />
+                        {region.total > 1 && <text dy="0.35em">{region.total}</text>}
+                        <title>{`${region.label}: ${region.total} 台节点`}</title>
+                      </g>
+                    </g>
+                  );
+                })}
+              </g>
+            </svg>
 
             <div className="node-map-view__legend">
               <div className="node-map-view__legend-card">
@@ -158,15 +332,15 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
                 <div className="node-map-view__legend-items">
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-online" />
-                    All online
+                    全部在线
                   </span>
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-partial" />
-                    Partial
+                    部分在线
                   </span>
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-offline" />
-                    All offline
+                    全部离线
                   </span>
                 </div>
               </div>
@@ -174,7 +348,7 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
               {summary.unmappedNodes.length > 0 && (
                 <div className="node-map-view__legend-card">
                   <span className="text-xs font-medium text-slate-600">
-                    +{summary.unmappedNodes.length} hidden region
+                    {`+${summary.unmappedNodes.length} 个未显示地区`}
                   </span>
                 </div>
               )}
@@ -184,13 +358,17 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
           <div className="node-map-view__detail">
             {selectedRegion && (
               <div className="node-map-view__detail-card">
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100/90 px-5 py-5">
-                  <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      <span>{selectedRegion.emoji}</span>
-                      <span>{selectedRegion.label}</span>
+                <div className="node-map-view__detail-header">
+                  <div className="node-map-view__detail-heading">
+                    <span className="node-map-view__detail-flag" aria-hidden="true">
+                      <Flag flag={selectedRegion.emoji} />
+                    </span>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+                        {selectedRegion.label}
+                      </h3>
+                      <p className="text-sm text-slate-500">{`该地区共 ${selectedRegion.total} 台节点`}</p>
                     </div>
-                    <h3 className="text-xl font-semibold tracking-tight">{selectedRegion.label}</h3>
                   </div>
 
                   <Badge
@@ -203,37 +381,41 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
                           : "bg-amber-50 text-amber-700"
                     }`}
                   >
-                    {selectedRegion.status}
+                    {getStatusText(selectedRegion.status)}
                   </Badge>
                 </div>
 
                 <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Servers</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">节点数</div>
                     <div className="mt-2 text-2xl font-semibold text-slate-900">{selectedRegion.total}</div>
                   </div>
                   <div className="rounded-2xl bg-emerald-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-emerald-700">Online</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-emerald-700">在线</div>
                     <div className="mt-2 text-2xl font-semibold text-emerald-900">{selectedRegion.online}</div>
                   </div>
                   <div className="rounded-2xl bg-rose-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-rose-700">Offline</div>
+                    <div className="text-xs uppercase tracking-[0.16em] text-rose-700">离线</div>
                     <div className="mt-2 text-2xl font-semibold text-rose-900">{selectedRegion.offline}</div>
                   </div>
                 </div>
 
-                <div className="space-y-3 px-5 pb-5">
+                <div className="node-map-view__node-list">
                   {selectedRegion.nodes.map((node) => {
                     const online = (liveData?.online ?? []).includes(node.uuid);
+                    const secondaryText = node.group?.trim() || node.os;
 
                     return (
-                      <div
+                      <button
                         key={node.uuid}
-                        className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white/90 px-4 py-3 shadow-sm"
+                        type="button"
+                        className="node-map-view__node-card"
+                        onClick={() => onOpenNodeDetails?.(node.uuid)}
+                        aria-label={`查看 ${node.name} 详情`}
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 text-left">
                           <div className="truncate font-medium text-slate-900">{node.name}</div>
-                          <div className="truncate text-xs text-slate-500">{node.uuid}</div>
+                          <div className="truncate text-xs text-slate-500">{secondaryText}</div>
                         </div>
                         <Badge
                           variant="secondary"
@@ -242,10 +424,10 @@ export function NodeMapView({ nodes, liveData }: NodeMapViewProps) {
                           }`}
                         >
                           {online
-                            ? t("nodeCard.online", { defaultValue: "Online" })
-                            : t("nodeCard.offline", { defaultValue: "Offline" })}
+                            ? t("nodeCard.online", { defaultValue: "在线" })
+                            : t("nodeCard.offline", { defaultValue: "离线" })}
                         </Badge>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

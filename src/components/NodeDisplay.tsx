@@ -266,7 +266,11 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               onOpenNodeDetails={handleOpenNodeDetails}
             />
           ) : viewMode === "map" ? (
-            <NodeMapView nodes={filteredNodes} liveData={liveData} />
+            <NodeMapView
+              nodes={filteredNodes}
+              liveData={liveData}
+              onOpenNodeDetails={handleOpenNodeDetails}
+            />
           ) : (
             <Suspense
               fallback={<div className="p-4 text-center">Loading table...</div>}

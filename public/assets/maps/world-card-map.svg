@@ -1,21 +1,97 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" fill="none">
   <defs>
-    <linearGradient id="continent" x1="122" y1="108" x2="864" y2="396" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D8E7F5"/>
-      <stop offset="1" stop-color="#C7D9EA"/>
+    <linearGradient id="continent-fill" x1="120" y1="92" x2="876" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DEEBF8"/>
+      <stop offset="1" stop-color="#C8DBEE"/>
     </linearGradient>
-    <filter id="soft" x="80" y="70" width="840" height="360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#94A3B8" flood-opacity=".12"/>
+    <linearGradient id="continent-highlight" x1="274" y1="96" x2="702" y2="432" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="56" y="42" width="890" height="438" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#94A3B8" flood-opacity=".12"/>
     </filter>
   </defs>
-  <g filter="url(#soft)" opacity=".96">
-    <path d="M126 157C143 128 170 110 207 102C256 91 281 119 305 138C321 150 351 154 356 176C360 192 344 203 329 208C306 215 281 208 261 218C231 233 223 273 195 293C171 311 133 311 117 287C96 254 103 199 126 157Z" fill="url(#continent)"/>
-    <path d="M281 327C308 317 342 318 361 333C377 345 374 372 360 389C341 412 307 427 279 416C249 404 242 360 255 339C261 330 271 323 281 327Z" fill="url(#continent)"/>
-    <path d="M413 146C452 112 503 95 555 101C601 106 649 125 679 159C692 173 706 194 698 211C687 235 649 236 625 247C600 258 589 282 564 291C525 306 484 275 445 284C419 290 392 312 369 302C339 288 334 246 346 215C357 186 388 169 413 146Z" fill="url(#continent)"/>
-    <path d="M487 327C509 312 543 309 566 322C594 338 611 376 594 405C576 436 532 449 500 437C469 426 445 391 453 360C457 345 470 337 487 327Z" fill="url(#continent)"/>
-    <path d="M719 166C752 144 799 131 836 139C871 147 906 174 907 209C908 231 888 248 869 260C851 271 828 277 812 293C794 311 792 342 769 351C741 362 711 341 694 317C679 296 672 269 671 244C670 214 693 184 719 166Z" fill="url(#continent)"/>
-    <path d="M785 365C808 353 837 351 858 363C886 378 906 410 894 436C880 466 836 475 803 467C771 459 743 430 748 399C751 382 769 374 785 365Z" fill="url(#continent)"/>
-    <path d="M599 171C613 164 631 165 641 177C653 190 649 214 635 223C624 230 609 228 599 220C586 210 585 181 599 171Z" fill="#D4E3F1"/>
-    <path d="M849 257C862 248 879 248 890 257C900 266 900 284 889 293C877 303 859 304 848 294C836 283 837 265 849 257Z" fill="#D4E3F1"/>
+
+  <g filter="url(#soft-shadow)" opacity=".98">
+    <path
+      id="continent-north-america"
+      d="M112 160C127 127 162 103 210 92C244 84 286 87 316 104C340 118 358 136 372 149C388 164 409 176 407 193C405 211 382 220 362 222C338 225 320 220 298 225C275 231 260 245 246 260C231 277 217 301 194 313C167 327 131 320 113 295C96 271 95 221 112 160ZM318 221C334 233 356 239 372 251C388 264 388 281 373 292C356 305 329 308 306 306C285 304 269 294 267 277C264 258 283 238 318 221Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-greenland"
+      d="M286 82C300 63 325 52 353 52C381 53 404 64 413 82C421 99 413 117 395 124C377 132 355 132 335 127C314 123 293 111 287 96C282 91 282 86 286 82Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.4"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-south-america"
+      d="M285 326C305 315 332 316 353 327C372 338 381 358 377 380C373 402 360 424 347 441C332 460 308 470 287 463C267 457 251 439 247 416C243 397 249 374 258 358C266 344 274 334 285 326Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-eurasia"
+      d="M404 142C433 113 473 94 521 88C563 82 608 88 645 100C678 111 714 126 741 144C769 162 794 186 792 207C789 225 762 230 737 233C711 236 689 236 669 244C646 254 630 268 612 279C592 291 565 297 539 294C514 292 489 285 463 280C438 275 411 278 389 269C365 259 349 239 347 218C344 191 371 172 404 142Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-africa"
+      d="M515 287C536 280 562 281 583 292C605 303 621 326 621 351C621 377 608 401 590 420C572 439 545 449 521 442C497 435 478 415 470 391C463 368 466 340 478 319C486 305 499 293 515 287Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-oceania"
+      d="M788 360C807 347 831 344 853 349C876 355 897 369 907 389C916 407 909 426 892 435C874 444 848 444 824 439C800 434 777 421 771 402C765 387 773 370 788 360ZM865 332C876 324 890 322 902 326C913 330 922 339 923 350C924 360 918 369 907 372C895 375 880 372 870 365C859 357 855 341 865 332Z"
+      fill="url(#continent-fill)"
+      stroke="#BDD2E5"
+      stroke-width="1.6"
+      stroke-linejoin="round"
+    />
+    <path
+      id="continent-antarctica"
+      d="M426 468C472 459 535 456 598 459C664 463 720 474 744 488C702 498 636 504 571 502C503 500 446 488 426 468Z"
+      fill="#D8E6F3"
+      fill-opacity=".78"
+      stroke="#C9D9E8"
+      stroke-width="1.2"
+      stroke-linejoin="round"
+    />
+
+    <path
+      d="M145 156C159 130 187 112 225 104C256 98 291 102 316 116C334 126 350 139 362 153"
+      stroke="url(#continent-highlight)"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M425 148C455 121 497 106 541 103C597 99 659 117 711 154"
+      stroke="url(#continent-highlight)"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M518 303C540 297 564 300 582 311C599 322 611 341 612 360"
+      stroke="url(#continent-highlight)"
+      stroke-width="10"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
   </g>
 </svg>
