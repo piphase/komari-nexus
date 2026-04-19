@@ -15,6 +15,8 @@
 }
 
 .node-map-view__surface {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   position: relative;
   min-height: 500px;
   overflow: hidden;
@@ -38,7 +40,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 500px;
+  min-height: 0;
 }
 
 .node-map-view__ocean {
@@ -90,25 +92,26 @@
 }
 
 .node-map-view__legend {
-  position: absolute;
-  left: 1.15rem;
-  right: 1.15rem;
-  bottom: 1rem;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  padding: 0.95rem 1rem 1rem;
+  border-top: 1px solid rgba(191, 219, 254, 0.72);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.76), rgba(255, 255, 255, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .node-map-view__legend-card {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.75rem 0.95rem;
-  border: 1px solid rgba(226, 232, 240, 0.84);
+  padding: 0.62rem 0.9rem;
+  border: 1px solid rgba(226, 232, 240, 0.82);
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
   backdrop-filter: blur(16px);
 }
 
@@ -237,7 +240,11 @@
   }
 
   .node-map-view__svg {
-    min-height: 420px;
+    min-height: 0;
+  }
+
+  .node-map-view__legend {
+    padding: 0.85rem;
   }
 
   .node-map-view__detail-header {

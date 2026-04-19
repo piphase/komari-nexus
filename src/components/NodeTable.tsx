@@ -17,7 +17,6 @@ import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData, Record } from "../types/LiveData";
 import { formatUptime } from "./Node";
 import { formatBytes } from "@/utils/unitHelper";
-import UsageBar from "./UsageBar";
 import AdaptiveChart from "./AdaptiveChart";
 import Flag from "./Flag";
 import PriceTags from "./PriceTags";
@@ -160,7 +159,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
   return (
     <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <Table className="w-full min-w-[1094px] table-fixed">
+        <Table className="w-full min-w-[1240px] table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[30px] px-2"></TableHead>
@@ -195,7 +194,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                 </Flex>
               </TableHead>
               <TableHead
-                className="w-[80px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
+                className="w-[124px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
                 onClick={handleSort('cpu')}
                 title={t("nodeCard.sortTooltip")}
               >
@@ -205,7 +204,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                 </Flex>
               </TableHead>
               <TableHead
-                className="w-[80px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
+                className="w-[124px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
                 onClick={handleSort('ram')}
                 title={t("nodeCard.sortTooltip")}
               >
@@ -215,7 +214,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                 </Flex>
               </TableHead>
               <TableHead
-                className="w-[80px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
+                className="w-[124px] cursor-pointer hover:bg-muted/50 transition-colors text-center px-2"
                 onClick={handleSort('disk')}
                 title={t("nodeCard.sortTooltip")}
               >
@@ -340,7 +339,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-2 px-2">
+                  <TableCell className="py-3 px-2">
                     <div className="flex justify-center">
                       <AdaptiveChart
                         value={nodeData.cpu.usage}
@@ -350,7 +349,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-2 px-2">
+                  <TableCell className="py-3 px-2">
                     <div className="flex justify-center">
                       <AdaptiveChart
                         value={memoryUsagePercent}
@@ -361,7 +360,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
                     </div>
                   </TableCell>
 
-                  <TableCell className="py-2 px-2">
+                  <TableCell className="py-3 px-2">
                     <div className="flex justify-center">
                       <AdaptiveChart
                         value={diskUsagePercent}

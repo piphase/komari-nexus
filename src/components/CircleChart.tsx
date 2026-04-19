@@ -56,13 +56,13 @@ export default function CircleChart({ value, label, subLabel, color, compact = f
   if (compact) {
     return (
       <div className="flex items-center justify-center">
-        <div className="h-[40px] w-[40px] relative">
+        <div className="relative h-[76px] w-[76px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
               cx="50%"
               cy="50%"
-              innerRadius="65%"
-              outerRadius="95%"
+              innerRadius="68%"
+              outerRadius="96%"
               barSize={7}
               data={data}
               startAngle={90}
@@ -86,7 +86,7 @@ export default function CircleChart({ value, label, subLabel, color, compact = f
 
           {/* Centered Percentage for compact mode */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-[11px] font-bold text-foreground">
+            <span className="text-[12px] font-bold tracking-tight text-foreground">
               {Math.round(chartValue)}%
             </span>
           </div>

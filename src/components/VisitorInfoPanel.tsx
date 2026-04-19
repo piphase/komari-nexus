@@ -6,10 +6,11 @@ import { Activity, Globe, MapPin } from "lucide-react";
 import Flag from "@/components/Flag";
 
 const AUTO_HIDE_DELAY = 5000;
+const INTRO_DELAY = 32;
+const LATENCY_TIMEOUT = 4000;
 const INFO_ENDPOINT = "https://ipinfo.io/json";
-const LATENCY_ENDPOINT = "https://www.google.com/generate_204";
+const LATENCY_ENDPOINT = "https://www.cloudflare.com/cdn-cgi/trace";
 const UNAVAILABLE = "不可用";
-const FETCH_FAILED = "获取失败";
 const PANEL_TITLE = "访客信息";
 const LATENCY_LABEL = "延迟";
 const IP_LABEL = "IP 地址";
@@ -29,16 +30,6 @@ type VisitorInfoState = {
   countryCode: string | null;
   organization: string;
   latency: string;
-  failed: boolean;
-};
-
-const DEFAULT_STATE: VisitorInfoState = {
-  ip: FETCH_FAILED,
-  location: UNAVAILABLE,
-  countryCode: null,
-  organization: UNAVAILABLE,
-  latency: UNAVAILABLE,
-  failed: true,
 };
 
 const sanitizeCountryCode = (value?: string) =>
@@ -95,28 +86,51 @@ const measureLatency = async (signal: AbortSignal) => {
   )} ms`;
 };
 
+const measureLatencyWithTimeout = async (signal: AbortSignal) =>
+  new Promise<string>((resolve) => {
+    const timeoutId = window.setTimeout(() => {
+      resolve(UNAVAILABLE);
+    }, LATENCY_TIMEOUT);
+
+    void measureLatency(signal)
+      .then((latency) => resolve(latency))
+      .catch(() => resolve(UNAVAILABLE))
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+      });
+  });
+
 export default function VisitorInfoPanel() {
-  const [open, setOpen] = useState(true);
-  const [state, setState] = useState<VisitorInfoState>(DEFAULT_STATE);
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<VisitorInfoState | null>(null);
+  const [hasPresented, setHasPresented] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const introTimerRef = useRef<number | null>(null);
+
+  const clearAutoHide = () => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const clearIntroTimer = () => {
+    if (introTimerRef.current) {
+      window.clearTimeout(introTimerRef.current);
+      introTimerRef.current = null;
+    }
+  };
+
+  const startAutoHide = () => {
+    clearAutoHide();
+    timerRef.current = window.setTimeout(() => {
+      setOpen(false);
+    }, AUTO_HIDE_DELAY);
+  };
 
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
-
-    const clearAutoHide = () => {
-      if (timerRef.current) {
-        window.clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-
-    const startAutoHide = () => {
-      clearAutoHide();
-      timerRef.current = window.setTimeout(() => {
-        setOpen(false);
-      }, AUTO_HIDE_DELAY);
-    };
 
     const load = async () => {
       try {
@@ -129,8 +143,9 @@ export default function VisitorInfoPanel() {
         }
 
         const payload = (await response.json()) as VisitorInfoPayload;
+        const latency = await measureLatencyWithTimeout(controller.signal);
 
-        if (cancelled) {
+        if (cancelled || controller.signal.aborted) {
           return;
         }
 
@@ -139,37 +154,30 @@ export default function VisitorInfoPanel() {
           location: buildLocation(payload.city, payload.country),
           countryCode: sanitizeCountryCode(payload.country),
           organization: payload.org || UNAVAILABLE,
-          latency: UNAVAILABLE,
-          failed: false,
+          latency,
         });
-        startAutoHide();
-
-        void measureLatency(controller.signal).then((latency) => {
-          if (cancelled) {
+        setHasPresented(false);
+        setOpen(false);
+        clearIntroTimer();
+        introTimerRef.current = window.setTimeout(() => {
+          if (cancelled || controller.signal.aborted) {
             return;
           }
 
-          setState((current) => {
-            if (current.failed) {
-              return current;
-            }
-
-            return {
-              ...current,
-              latency,
-            };
-          });
-        });
+          setHasPresented(true);
+          setOpen(true);
+          startAutoHide();
+        }, INTRO_DELAY);
       } catch {
-        if (controller.signal.aborted) {
+        if (controller.signal.aborted || cancelled) {
           return;
         }
 
-        if (!cancelled) {
-          clearAutoHide();
-          setOpen(true);
-          setState(DEFAULT_STATE);
-        }
+        clearAutoHide();
+        clearIntroTimer();
+        setOpen(false);
+        setHasPresented(false);
+        setState(null);
       }
     };
 
@@ -179,11 +187,12 @@ export default function VisitorInfoPanel() {
       cancelled = true;
       controller.abort();
       clearAutoHide();
+      clearIntroTimer();
     };
   }, []);
 
   const latencyTone = useMemo(() => {
-    if (state.latency === UNAVAILABLE) {
+    if (!state || state.latency === UNAVAILABLE) {
       return "bg-muted text-muted-foreground";
     }
 
@@ -191,33 +200,33 @@ export default function VisitorInfoPanel() {
     return numericValue > 200
       ? "bg-orange-500/15 text-orange-700 dark:text-orange-300"
       : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-  }, [state.latency]);
+  }, [state]);
 
   const pauseAutoHide = () => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+    clearAutoHide();
   };
 
   const restartAutoHide = () => {
-    if (state.failed) {
+    if (!state) {
       return;
     }
 
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-    }
-
-    timerRef.current = window.setTimeout(() => {
-      setOpen(false);
-    }, AUTO_HIDE_DELAY);
+    startAutoHide();
   };
 
   const reopen = () => {
+    if (!state) {
+      return;
+    }
+
+    setHasPresented(true);
     setOpen(true);
-    restartAutoHide();
+    startAutoHide();
   };
+
+  if (!state) {
+    return null;
+  }
 
   return (
     <>
@@ -227,9 +236,11 @@ export default function VisitorInfoPanel() {
         onMouseEnter={pauseAutoHide}
         onMouseLeave={restartAutoHide}
         className={[
-          "fixed bottom-6 left-4 z-40 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70",
-          "bg-background/90 shadow-2xl backdrop-blur-xl transition-transform duration-500",
-          open ? "translate-x-0" : "-translate-x-[120%]",
+          "fixed bottom-6 left-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70",
+          "bg-background/90 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out will-change-transform",
+          open
+            ? "translate-x-0 scale-100 opacity-100"
+            : "-translate-x-[120%] scale-95 opacity-0 pointer-events-none",
         ].join(" ")}
       >
         <div className="space-y-4 p-4 sm:p-5">
@@ -253,7 +264,7 @@ export default function VisitorInfoPanel() {
                 <Globe className="h-4 w-4" />
                 <span>{IP_LABEL}</span>
               </div>
-              <span className="font-mono text-right text-foreground">{state.ip}</span>
+              <span className="font-mono text-right text-sm text-foreground">{state.ip}</span>
             </div>
 
             <div className="flex items-start justify-between gap-4">
@@ -276,12 +287,12 @@ export default function VisitorInfoPanel() {
       <button
         type="button"
         aria-label={REOPEN_LABEL}
-        data-state={open ? "hidden" : "visible"}
+        data-state={!hasPresented || open ? "hidden" : "visible"}
         onClick={reopen}
         className={[
-          "fixed bottom-6 left-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/70",
+          "fixed bottom-6 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-border/70",
           "bg-background/90 shadow-lg backdrop-blur-xl transition-all duration-300",
-          open
+          !hasPresented || open
             ? "pointer-events-none scale-90 opacity-0"
             : "pointer-events-auto scale-100 opacity-100",
         ].join(" ")}

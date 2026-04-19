@@ -111,7 +111,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
         <CardContent>
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center text-sm text-muted-foreground">
             {t("nodes.empty", { defaultValue: "暂无节点数据" })}
-          </div>
+            </div>
         </CardContent>
       </Card>
     );

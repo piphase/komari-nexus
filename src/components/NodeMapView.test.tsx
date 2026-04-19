@@ -177,7 +177,13 @@ describe("NodeMapView", () => {
     const { container } = render(<NodeMapView nodes={demoNodes} liveData={demoLiveData} />);
 
     const detailCard = container.querySelector(".node-map-view__detail-card");
+    const mapSurface = container.querySelector(".node-map-view__surface");
+    const legend = container.querySelector(".node-map-view__legend");
     expect(detailCard).toBeInTheDocument();
+    expect(mapSurface).toBeInTheDocument();
+    expect(legend).toBeInTheDocument();
+    expect(mapSurface?.querySelector(".node-map-view__legend")).toBeInTheDocument();
+    expect(container.querySelector(".node-map-view__map-panel")).not.toBeInTheDocument();
     expect(within(detailCard as HTMLElement).getAllByText("United States")).toHaveLength(1);
     expect(screen.getByText("全球分布")).toBeInTheDocument();
     expect(screen.getByText("2 个活跃国家/地区")).toBeInTheDocument();

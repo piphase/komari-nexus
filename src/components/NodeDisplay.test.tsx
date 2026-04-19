@@ -5,10 +5,12 @@ import userEvent from "@testing-library/user-event";
 import NodeDisplay from "@/components/NodeDisplay";
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => [
-    (key: string, options?: Record<string, unknown>) =>
-      typeof options?.defaultValue === "string" ? options.defaultValue : key,
-  ],
+  useTranslation: () => {
+    const translate = (key: string, options?: Record<string, unknown>) =>
+      typeof options?.defaultValue === "string" ? options.defaultValue : key;
+
+    return Object.assign([translate], { t: translate });
+  },
 }));
 
 vi.mock("next/link", () => ({
@@ -78,8 +80,7 @@ vi.mock("@/components/instance/NodeDetailsPanel", () => ({
   }: {
     open: boolean;
     uuid: string | null;
-  }) =>
-    open && uuid ? <div>{`details:${uuid}`}</div> : null,
+  }) => (open && uuid ? <div>{`details:${uuid}`}</div> : null),
 }));
 
 vi.mock("@/components/NodeTable", () => ({
@@ -134,29 +135,53 @@ const demoLiveData = {
 } as const;
 
 describe("NodeDisplay classic cards", () => {
-  it("shows map as a third node view", () => {
-    render(
-      <NodeDisplay
-        nodes={[demoNode]}
-        liveData={demoLiveData}
-      />
-    );
+  it("uses 中文视图切换文案并默认进入地图视图", () => {
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    expect(screen.getByRole("button", { name: /map/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /地图/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /卡片/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /列表/i })).toBeInTheDocument();
+    expect(screen.getByText("全球分布")).toBeInTheDocument();
+    expect(screen.queryByText("node-table")).not.toBeInTheDocument();
   });
 
   it("opens details when a classic card is clicked", async () => {
     const user = userEvent.setup();
 
-    render(
-      <NodeDisplay
-        nodes={[demoNode]}
-        liveData={demoLiveData}
-      />
-    );
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
     await user.click(screen.getByText("Demo Node"));
 
     expect(screen.getByText("details:demo-node")).toBeInTheDocument();
+  });
+
+  it("does not keep the previous view visible after switching to 列表", async () => {
+    const user = userEvent.setup();
+
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
+
+    expect(screen.getByText("全球分布")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /列表/i }));
+
+    expect(screen.getByText("node-table")).toBeInTheDocument();
+    expect(screen.queryByText("全球分布")).not.toBeInTheDocument();
+  });
+
+  it("shows a remaining value calculator entry and dispatches the shared open event", async () => {
+    const user = userEvent.setup();
+    const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
+
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
+
+    const openButton = screen.getByRole("button", { name: "剩余价值计算器" });
+
+    await user.click(openButton);
+
+    expect(dispatchEventSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "open-remaining-value-calculator",
+      }),
+    );
   });
 });

@@ -7,6 +7,17 @@ vi.mock("@/components/Flag", () => ({
   default: ({ flag }: { flag: string }) => <span data-testid={`flag-${flag}`} />,
 }));
 
+const createDeferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+};
+
 describe("VisitorInfoPanel", () => {
   const originalFetch = global.fetch;
 
@@ -16,7 +27,7 @@ describe("VisitorInfoPanel", () => {
     global.fetch = originalFetch;
   });
 
-  it("shows the country flag in the title, keeps long location text readable, auto-hides after success, and reopens from the compact button", async () => {
+  it("waits until latency is ready, then animates in before auto-hiding and reopening from the compact button", async () => {
     vi.useFakeTimers();
 
     let now = 0;
@@ -25,39 +36,58 @@ describe("VisitorInfoPanel", () => {
       return now;
     });
 
+    const metadataRequest = createDeferred<Response>();
+    const latencyRequest = createDeferred<Response>();
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          ip: "203.0.113.7",
-          city: "Buenos Aires Autonomous City",
-          country: "AR",
-          org: "AS12345 Example Telecom",
-        }),
-      } as Response)
-      .mockResolvedValue({ ok: true } as Response);
+      .mockImplementationOnce(() => metadataRequest.promise)
+      .mockImplementation(() => latencyRequest.promise);
 
     global.fetch = fetchMock as unknown as typeof fetch;
 
     render(<VisitorInfoPanel />);
+
+    expect(screen.queryByTestId("visitor-info-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    metadataRequest.resolve({
+      ok: true,
+      json: async () => ({
+        ip: "203.0.113.7",
+        city: "Buenos Aires Autonomous City",
+        country: "AR",
+        org: "AS12345 Example Telecom",
+      }),
+    } as Response);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(screen.queryByTestId("visitor-info-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    latencyRequest.resolve({ ok: true } as Response);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
     const panel = screen.getByTestId("visitor-info-panel");
+    expect(panel).toHaveAttribute("data-state", "closed");
+    expect(panel).toHaveClass("z-50");
+    expect(screen.getByRole("button")).toHaveAttribute("data-state", "hidden");
 
-    expect(within(panel).getByText("访客信息")).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(32);
+    });
+
     expect(within(panel).getByTestId("flag-AR")).toBeInTheDocument();
-    expect(within(panel).getByText("IP 地址")).toBeInTheDocument();
-    expect(within(panel).getByText("地理位置")).toBeInTheDocument();
-    expect(within(panel).getByText("203.0.113.7")).toBeInTheDocument();
+    expect(within(panel).getByText("203.0.113.7")).toHaveClass("text-sm");
     expect(within(panel).getByText(/Buenos Aires Autonomous City/)).toBeInTheDocument();
     expect(within(panel).getByText(/Example Telecom/)).toBeInTheDocument();
-    expect(within(panel).queryByText("运营商")).not.toBeInTheDocument();
 
-    const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
+    const reopenButton = screen.getByRole("button");
 
     expect(panel).toHaveAttribute("data-state", "open");
     expect(reopenButton).toHaveAttribute("data-state", "hidden");
@@ -75,27 +105,24 @@ describe("VisitorInfoPanel", () => {
     expect(reopenButton).toHaveAttribute("data-state", "hidden");
   }, 10000);
 
-  it("keeps the panel visible and avoids auto-hide scheduling when metadata fails", async () => {
+  it("stays hidden and avoids auto-hide scheduling when metadata fails", async () => {
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     global.fetch = vi.fn().mockRejectedValue(new Error("network down")) as unknown as typeof fetch;
 
     render(<VisitorInfoPanel />);
 
-    expect(await screen.findByText("获取失败")).toBeInTheDocument();
-    expect(screen.getByText("访客信息")).toBeInTheDocument();
-    expect(screen.getByText("IP 地址")).toBeInTheDocument();
-    expect(screen.getByText("地理位置")).toBeInTheDocument();
-    expect(screen.queryByText("运营商")).not.toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+    });
 
-    const panel = screen.getByTestId("visitor-info-panel");
-    const reopenButton = screen.getByRole("button", { name: "重新展开访客信息" });
-
-    expect(panel).toHaveAttribute("data-state", "open");
-    expect(reopenButton).toHaveAttribute("data-state", "hidden");
+    expect(screen.queryByTestId("visitor-info-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(setTimeoutSpy.mock.calls.some(([, delay]) => delay === 5000)).toBe(false);
   });
 
-  it("shows metadata even if latency probing stays pending", async () => {
+  it("opens with unavailable latency after probing times out", async () => {
+    vi.useFakeTimers();
+
     const pendingLatency = new Promise<Response>(() => {});
     const fetchMock = vi
       .fn()
@@ -114,20 +141,34 @@ describe("VisitorInfoPanel", () => {
 
     render(<VisitorInfoPanel />);
 
-    expect(await screen.findByText("198.51.100.9")).toBeInTheDocument();
-    expect(screen.getByText(/Singapore/)).toBeInTheDocument();
-    expect(screen.getByText(/Demo Net/)).toBeInTheDocument();
-    expect(screen.getByText("延迟 不可用")).toBeInTheDocument();
+    expect(screen.queryByTestId("visitor-info-panel")).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+      await Promise.resolve();
+    });
 
     const panel = screen.getByTestId("visitor-info-panel");
+    expect(panel).toHaveAttribute("data-state", "closed");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(32);
+    });
+
+    expect(panel).toHaveAttribute("data-state", "open");
+
     expect(within(panel).getByTestId("flag-SG")).toBeInTheDocument();
+    expect(screen.getByText("198.51.100.9")).toBeInTheDocument();
+    expect(screen.getByText(/Singapore/)).toBeInTheDocument();
+    expect(screen.getByText(/Demo Net/)).toBeInTheDocument();
 
     const [, infoInit] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const [, latencyInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    const [latencyUrl, latencyInit] = fetchMock.mock.calls[1] as [string, RequestInit];
 
     expect(infoInit.signal).toBeInstanceOf(AbortSignal);
     expect(latencyInit.signal).toBe(infoInit.signal);
-  });
+    expect(latencyUrl).toContain("cloudflare");
+  }, 10000);
 
   it("aborts in-flight requests on unmount", () => {
     const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>(() => {}));
