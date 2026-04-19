@@ -17,6 +17,6 @@ describe("komari-theme.json", () => {
 
     expect(metadata.name).toBe("Komari Nexus");
     expect(metadata.short).toBe("nexus");
-    expect(metadata.url).toBe("https://github.com/piphase/komari-next");
+    expect(metadata.url).toBe("https://github.com/piphase/komari-nexus");
   });
 });

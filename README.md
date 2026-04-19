@@ -1,126 +1,113 @@
 # Komari Nexus
 
-Komari Nexus is a customized Komari theme based on [KomariNext](https://github.com/tonyliuzj/komari-next).  
-It is built with **Next.js**, **TypeScript**, **Tailwind CSS** and **Shadcn UI** and packaged as a static site that can be used as a Komari theme.
+Komari Nexus is a customized Komari theme based on [KomariNext](https://github.com/tonyliuzj/komari-next), focused on clearer global presentation and practical dashboard-side utilities.
 
-[涓枃](https://github.com/piphase/komari-next/blob/main/README-CN.md)
+[中文说明](https://github.com/piphase/komari-nexus/blob/main/README-CN.md)
 
-[Repository](https://github.com/piphase/komari-next)
+[Repository](https://github.com/piphase/komari-nexus)
 
-[Original Project](https://github.com/tonyliuzj/komari-next)
+## Project Overview
 
-> This repository contains only the frontend. You will need a running Komari backend instance for the UI to talk to. Or you can download the theme file and upload it through Komari's admin dashboard, this would be the recommanded way.
+Komari Nexus keeps the solid KomariNext foundation, but reshapes the theme around a more visual and utility-oriented experience.
 
-![dark-theme](https://github.com/piphase/komari-next/blob/main/images/dark-theme.png?raw=true)
-![colour-theme](https://github.com/piphase/komari-next/blob/main/images/show-theme.png?raw=true)
-![layout-theme](https://github.com/piphase/komari-next/blob/main/images/layout-theme.png?raw=true)
+This version is primarily aimed at users who want:
 
-## Features
+- a clearer global view of node distribution
+- a practical way to estimate remaining node value
+- lightweight visitor-side information directly on the page
 
-- Real鈥憈ime dashboard for server and node status
-- Instance detail pages with load and latency charts
-- Node list and management views
-- Internationalization (i18n) with `react-i18next`
-- Responsive layout and dark mode using Shadcn + Tailwind CSS
-- Theme packaging suitable for Komari's theme system
-- **Extensive Customization Options:**
-  - **6 Color Themes:** Default, Ocean, Sunset, Forest, Midnight, Rose
-  - **4 Card Layouts:** Classic, Modern, Minimal, Detailed - each with unique visual designs and element positioning
-  - **4 Graph Designs:** Circle, Progress Bar, Bar Chart, Minimal - all following the selected color theme
-  - **Customizable Status Cards:** Show/hide individual metrics on the dashboard
-  - **Bring your own background!** Use an image URL to set it as the background.
-  - **Ping stats display** Show package information at homepage straight away!
-  - All settings persist locally and sync across theme changes
+## Based On KomariNext
 
-## Tech Stack
+Komari Nexus is a secondary development project built on top of [KomariNext](https://github.com/tonyliuzj/komari-next).
 
-- **Framework:** Next.js (App Router, static export)
-- **Language:** TypeScript, React
-- **UI:** Shadcn UI + Radix UI primitives, Tailwind CSS v4
-- **Charts:** Recharts
-- **State / Data:** Custom contexts, RPC2 client, fetch-based APIs
+The upstream project provides the baseline Komari theme capabilities and overall technical foundation. This repository keeps that attribution explicit and continues to respect the original upstream project and license.
 
-## Prerequisites
+## What Komari Nexus Adds
 
-- **Node.js** 22 or newer (LTS recommended)
-- A running **Komari backend** (API) reachable from the browser
+### Global Distribution Module
 
-## Getting Started
+Komari Nexus adds a dedicated global distribution view that lets users understand node placement at a glance.
 
-- Build your own theme package from this fork and upload it through Komari's admin dashboard.
+Highlights:
 
-## Dev
+- world map based node distribution
+- country and region highlighting
+- region-side node list for the selected area
+- support for opening the existing node detail drawer from map-side interactions
 
-Clone this repository and install dependencies:
+Screenshot for this module will be added later.
+
+### Remaining Value Calculator
+
+Komari Nexus adds a remaining value calculator designed for practical day-to-day use.
+
+Highlights:
+
+- floating entry plus page-side entry button
+- remaining value calculation for nodes with price and billing data
+- default CNY display with exchange-rate conversion
+- filtering between included, skipped, and expired nodes
+
+Screenshot for this module will be added later.
+
+### Visitor Information Floating Card
+
+Komari Nexus adds a visitor information floating card in the lower-left corner of the page.
+
+Highlights:
+
+- visitor IP and basic geographic/network information
+- delayed presentation after data is ready
+- automatic collapse after display
+- compact reopen button after auto-hide
+
+Screenshot for this module will be added later.
+
+## Original KomariNext Features
+
+For the baseline theme features inherited from the upstream project, please refer to:
+
+[KomariNext](https://github.com/tonyliuzj/komari-next)
+
+This repository focuses on the custom additions and presentation direction specific to Komari Nexus, rather than duplicating the full upstream feature list.
+
+## Installation / Usage
+
+The recommended way to use Komari Nexus is:
+
+1. Download the packaged theme from Releases
+2. Upload the theme package through the Komari admin dashboard
+
+If you prefer local development or manual packaging, you can build it yourself as described below.
+
+## Development
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Configure API target
-
-The frontend talks to the Komari backend via `/api/*` rewrites configured in `next.config.ts`.  
-Set the backend base URL using `NEXT_PUBLIC_API_TARGET`:
-
-Create a `.env.local` file in the project root:
-
-```env
-NEXT_PUBLIC_API_TARGET=http://127.0.0.1:25774
-```
-
-Adjust the URL to point to your Komari backend instance.
-
-### Run in development
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-Then open `http://localhost:3000` in your browser.
-
-### Build for production / theme packaging
-
-This project is configured for static export (`output: "export"` in `next.config.ts`), with the build output written to `dist/`.
+Build the static theme output:
 
 ```bash
 npm run build
 ```
 
-After the build completes:
+When packaging the theme for Komari, make sure:
 
-- Serve the `dist` directory with any static web server, **or**
-- Use the contents of `dist` as part of a Komari theme bundle.
+- `komari-theme.json` is at the root of the zip
+- `preview.png` is at the root of the zip
+- built site files are placed under `dist/`
 
-## Theme Development
+## Acknowledgement And License
 
-This repository is designed to be used as a custom Komari theme.
+Komari Nexus is independently maintained, but it is based on the original [KomariNext](https://github.com/tonyliuzj/komari-next) project.
 
-1. Configure and customize the UI as needed.
-2. Edit `komari-theme.json` to match your theme鈥檚 metadata and settings.
-3. Build the project:
-
-   ```bash
-   npm run build
-   ```
-
-4. The static assets will be generated in the `dist` directory.  
-   Combine them with `komari-theme.json` as required by Komari鈥檚 theme system and package them according to the Komari documentation.
-
-## Scripts
-
-- `npm run dev` 鈥?Start the Next.js development server
-- `npm run build` 鈥?Build the static site into `dist/`
-- `npm run lint` 鈥?Run ESLint over the project
-
-## Contributing
-
-Contributions are welcome.  
-If you find issues or have ideas for improvements, feel free to open an issue or submit a pull request.
-
-## Attribution
-
-Komari Nexus is independently maintained, but it is based on the original [KomariNext](https://github.com/tonyliuzj/komari-next) project by Tony Liu.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=piphase/komari-next&type=date&legend=top-left)](https://www.star-history.com/#piphase/komari-next&type=date&legend=top-left)
+Please keep upstream attribution and licensing information intact when redistributing or modifying this project.

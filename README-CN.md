@@ -1,31 +1,112 @@
 # Komari Nexus
 
-Komari Nexus 鏄竴涓熀浜?KomariNext 浜屾寮€鍙戠殑 Komari 涓婚銆?瀹冨熀浜?**Next.js**銆?*TypeScript**銆?*Tailwind CSS** 鍜?**Shadcn UI** 鏋勫缓锛屽苟琚墦鍖呬负闈欐€佺珯鐐癸紝鍙綔涓?Komari 鐨勪富棰樹娇鐢ㄣ€?
+Komari Nexus 是一个基于 [KomariNext](https://github.com/tonyliuzj/komari-next) 深度定制的 Komari 主题，重点增强了全球展示能力和页面侧实用功能。
 
-[婕旂ず绔欑偣](https://probes.top)
+[仓库地址](https://github.com/piphase/komari-nexus)
 
-[浠撳簱鍦板潃](https://github.com/piphase/komari-next)
+## 项目说明
 
-> 璇ヤ粨搴撲粎鍖呭惈鍓嶇銆備綘闇€瑕佷竴涓鍦ㄨ繍琛岀殑 Komari 鍚庣瀹炰緥渚?UI 杩涜閫氫俊銆傛垨鑰呬綘涔熷彲浠ヤ笅杞戒富棰樻枃浠跺苟閫氳繃 Komari 鐨勭鐞嗗悗鍙颁笂浼狅紙鎺ㄨ崘杩欑鏂瑰紡锛夈€?
+Komari Nexus 保留了 KomariNext 原本成熟的主题基础，但在此之上更强调两件事：
 
-![dark-theme](https://github.com/piphase/komari-next/blob/main/images/dark-theme.png?raw=true)
-![colour-theme](https://github.com/piphase/komari-next/blob/main/images/show-theme.png?raw=true)
-![layout-theme](https://github.com/piphase/komari-next/blob/main/images/layout-theme.png?raw=true)
+- 更直观的全球节点分布展示
+- 更实用的主题内辅助功能
 
-## 鍔熻兘鐗规€?
+如果你希望主题不仅能展示节点状态，还能直接提供地图分布、剩余价值统计、访客信息这类增强能力，那么 Komari Nexus 更适合作为一个独立项目来使用。
 
-* 鏈嶅姟鍣ㄤ笌鑺傜偣鐘舵€佺殑瀹炴椂浠〃鐩?
-* 瀹炰緥璇︽儏椤碉紝鍖呭惈璐熻浇涓庡欢杩熷浘琛?
-* 鑺傜偣鍒楄〃涓庣鐞嗚鍥?
-* 鍩轰簬 `react-i18next` 鐨勫浗闄呭寲锛坕18n锛?
-* 浣跨敤 Shadcn + Tailwind CSS 鐨勫搷搴斿紡甯冨眬涓庢繁鑹叉ā寮?
-* 閫傞厤 Komari 涓婚绯荤粺鐨勪富棰樻墦鍖呮柟妗?
-* **涓板瘜鐨勮嚜瀹氫箟閫夐」锛?*
+## 基于 KomariNext
 
-  * **6 绉嶉厤鑹蹭富棰橈細** Default銆丱cean銆丼unset銆丗orest銆丮idnight銆丷ose
-  * **4 绉嶅崱鐗囧竷灞€锛?* Classic銆丮odern銆丮inimal銆丏etailed 鈥斺€?姣忕閮芥湁鐙壒鐨勮瑙夎璁′笌鍏冪礌甯冨眬
-  * **4 绉嶅浘琛ㄦ牱寮忥細** Circle銆丳rogress Bar銆丅ar Chart銆丮inimal 鈥斺€?鍧囦細璺熼殢鎵€閫夐厤鑹蹭富棰?
-  * **鍙嚜瀹氫箟鐘舵€佸崱鐗囷細** 鍙湪浠〃鐩樹腑鏄剧ず/闅愯棌鍗曢」鎸囨爣
-  * **鑷甫鑳屾櫙鍥撅紒** 浣跨敤鍥剧墖 URL 灏嗗叾璁剧疆涓鸿儗鏅€?
-  * **Ping 缁熻鏄剧ず** 鍦ㄩ椤靛嵆鍙洿鎺ュ睍绀烘暟鎹寘淇℃伅锛?
-  * 鎵€鏈夎缃細鍦ㄦ湰鍦版寔涔呭寲淇濆瓨锛屽苟鍙湪涓婚鍒囨崲鏃跺悓姝?
+Komari Nexus 是基于 [KomariNext](https://github.com/tonyliuzj/komari-next) 进行的二次开发项目。
+
+原项目提供了 Komari 主题的基础能力和整体技术框架，本项目在此基础上做了定向增强与界面重构。README 会明确保留上游项目链接与致谢说明，不会抹去原始来源。
+
+## Komari Nexus 新增功能
+
+### 全球分布模块
+
+Komari Nexus 新增了一个专门的全球分布视图，用来更直观地查看节点的地理分布情况。
+
+主要包括：
+
+- 基于世界地图的节点分布展示
+- 国家 / 地区高亮
+- 右侧联动显示该地区的节点列表
+- 可继续打开现有的节点详情抽屉
+
+这一部分的截图后续补充。
+
+### 剩余价值计算器
+
+Komari Nexus 新增了一个剩余价值计算器，用来统计带有价格与周期信息的节点剩余价值。
+
+主要包括：
+
+- 右下角浮动入口
+- 页面统计区入口按钮
+- 基于价格、周期、到期时间的剩余价值计算
+- 默认按 CNY 展示并支持汇率换算
+- 支持区分可计算、未纳入、已过期节点
+
+这一部分的截图后续补充。
+
+### 访客信息浮动卡片
+
+Komari Nexus 新增了一个左下角访客信息浮动卡片，用来显示访客侧的基础网络与地理信息。
+
+主要包括：
+
+- IP 地址展示
+- 地理位置与网络信息展示
+- 等待数据准备完成后再弹出
+- 展示数秒后自动收起
+- 收起后可通过小按钮重新展开
+
+这一部分的截图后续补充。
+
+## 原项目功能
+
+对于 KomariNext 原本已经具备的基础主题能力、原始功能范围和上游说明，请直接参考原项目仓库：
+
+[KomariNext](https://github.com/tonyliuzj/komari-next)
+
+本 README 不再重复罗列所有继承能力，而是重点说明 Komari Nexus 自身新增和调整过的部分。
+
+## 使用方式
+
+推荐使用方式：
+
+1. 在 Releases 中下载打包好的主题文件
+2. 在 Komari 后台上传主题包并启用
+
+如果你需要本地开发或自行打包，也可以按下面的方式构建。
+
+## 开发
+
+安装依赖：
+
+```bash
+npm install
+```
+
+启动开发环境：
+
+```bash
+npm run dev
+```
+
+构建主题静态输出：
+
+```bash
+npm run build
+```
+
+打包 Komari 主题时请确保：
+
+- zip 根目录包含 `komari-theme.json`
+- zip 根目录包含 `preview.png`
+- 页面构建内容位于 `dist/` 目录下
+
+## 致谢与许可证
+
+Komari Nexus 是一个独立维护的主题项目，但它建立在 [KomariNext](https://github.com/tonyliuzj/komari-next) 的基础之上。
+
+在分发、修改或继续二次开发时，请保留对上游项目的致谢与许可证信息。
