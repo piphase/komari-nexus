@@ -176,6 +176,8 @@ describe("RemainingValueCalculator", () => {
     expect(screen.getByRole("tab", { name: "EUR" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "刷新汇率" })).toBeInTheDocument();
 
+    expect(screen.getByTestId("remaining-value-rate-provider")).toBeInTheDocument();
+
     const [currencyTabList, filterTabList] = screen.getAllByRole("tablist");
 
     expect(currencyTabList).toHaveClass("w-fit");

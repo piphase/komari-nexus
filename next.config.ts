@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   distDir: 'dist',
   output: 'export',
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
   images: {
     unoptimized: true,
   },

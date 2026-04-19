@@ -388,6 +388,13 @@ export default function RemainingValueCalculator() {
 
         {ratesError && <div className="text-xs text-orange-600">{ratesError}</div>}
 
+        <div
+          data-testid="remaining-value-rate-provider"
+          className="text-xs leading-5 text-muted-foreground"
+        >
+          在线汇率由 Frankfurter 提供，仅会在你打开计算器后发起查询。
+        </div>
+
         <Tabs
           value={displayCurrency}
           onValueChange={(value) => setDisplayCurrency(value as DisplayCurrency)}
