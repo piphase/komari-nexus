@@ -35,7 +35,7 @@ Highlights:
 - region-side node list for the selected area
 - support for opening the existing node detail drawer from map-side interactions
 
-Screenshot for this module will be added later.
+![Komari Nexus Global Distribution](./images/komari-nexus-map-view.png)
 
 ### Remaining Value Calculator
 
@@ -48,7 +48,7 @@ Highlights:
 - default CNY display with exchange-rate conversion
 - filtering between included, skipped, and expired nodes
 
-Screenshot for this module will be added later.
+![Komari Nexus Remaining Value Calculator](./images/komari-nexus-remaining-value.png)
 
 ### Visitor Information Floating Card
 
@@ -61,7 +61,7 @@ Highlights:
 - automatic collapse after display
 - compact reopen button after auto-hide
 
-Screenshot for this module will be added later.
+![Komari Nexus Visitor Information Card](./images/komari-nexus-visitor-info.png)
 
 ## Original KomariNext Features
 
