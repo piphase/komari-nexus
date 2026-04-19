@@ -3,21 +3,21 @@
 Komari Nexus is a customized Komari theme based on [KomariNext](https://github.com/tonyliuzj/komari-next).  
 It is built with **Next.js**, **TypeScript**, **Tailwind CSS** and **Shadcn UI** and packaged as a static site that can be used as a Komari theme.
 
-[中文](https://github.com/strayplace/komari-next/blob/main/README-CN.md)
+[涓枃](https://github.com/piphase/komari-next/blob/main/README-CN.md)
 
-[Repository](https://github.com/strayplace/komari-next)
+[Repository](https://github.com/piphase/komari-next)
 
 [Original Project](https://github.com/tonyliuzj/komari-next)
 
 > This repository contains only the frontend. You will need a running Komari backend instance for the UI to talk to. Or you can download the theme file and upload it through Komari's admin dashboard, this would be the recommanded way.
 
-![dark-theme](https://github.com/strayplace/komari-next/blob/main/images/dark-theme.png?raw=true)
-![colour-theme](https://github.com/strayplace/komari-next/blob/main/images/show-theme.png?raw=true)
-![layout-theme](https://github.com/strayplace/komari-next/blob/main/images/layout-theme.png?raw=true)
+![dark-theme](https://github.com/piphase/komari-next/blob/main/images/dark-theme.png?raw=true)
+![colour-theme](https://github.com/piphase/komari-next/blob/main/images/show-theme.png?raw=true)
+![layout-theme](https://github.com/piphase/komari-next/blob/main/images/layout-theme.png?raw=true)
 
 ## Features
 
-- Real‑time dashboard for server and node status
+- Real鈥憈ime dashboard for server and node status
 - Instance detail pages with load and latency charts
 - Node list and management views
 - Internationalization (i18n) with `react-i18next`
@@ -96,7 +96,7 @@ After the build completes:
 This repository is designed to be used as a custom Komari theme.
 
 1. Configure and customize the UI as needed.
-2. Edit `komari-theme.json` to match your theme’s metadata and settings.
+2. Edit `komari-theme.json` to match your theme鈥檚 metadata and settings.
 3. Build the project:
 
    ```bash
@@ -104,13 +104,13 @@ This repository is designed to be used as a custom Komari theme.
    ```
 
 4. The static assets will be generated in the `dist` directory.  
-   Combine them with `komari-theme.json` as required by Komari’s theme system and package them according to the Komari documentation.
+   Combine them with `komari-theme.json` as required by Komari鈥檚 theme system and package them according to the Komari documentation.
 
 ## Scripts
 
-- `npm run dev` – Start the Next.js development server
-- `npm run build` – Build the static site into `dist/`
-- `npm run lint` – Run ESLint over the project
+- `npm run dev` 鈥?Start the Next.js development server
+- `npm run build` 鈥?Build the static site into `dist/`
+- `npm run lint` 鈥?Run ESLint over the project
 
 ## Contributing
 
@@ -123,4 +123,4 @@ Komari Nexus is independently maintained, but it is based on the original [Komar
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=strayplace/komari-next&type=date&legend=top-left)](https://www.star-history.com/#strayplace/komari-next&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=piphase/komari-next&type=date&legend=top-left)](https://www.star-history.com/#piphase/komari-next&type=date&legend=top-left)
