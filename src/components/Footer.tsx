@@ -58,18 +58,18 @@ const Footer = () => {
             <h4 className="text-sm font-semibold text-foreground">Powered By</h4>
             <div className="flex flex-col gap-2 text-center">
               <a
-                href="https://github.com/tonyliuzj/komari-next"
+                href="https://github.com/piphase/komari-nexus"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
               >
                 <Github className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                <span className="font-medium">Komari-Next</span>
+                <span className="font-medium">Komari Nexus</span>
               </a>
               <div className="flex items-center gap-1 text-xs text-muted-foreground justify-center">
-                <span>Made with</span>
+                <span>Based on</span>
                 <Heart className="h-3 w-3 text-red-500 fill-red-500 animate-pulse" />
-                <span>for Komari</span>
+                <span>KomariNext</span>
               </div>
             </div>
           </div>

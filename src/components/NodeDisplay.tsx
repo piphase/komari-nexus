@@ -1,20 +1,24 @@
-import React, { useState, useMemo, useRef, useEffect, Suspense } from "react";
-import { Search, Grid3X3, Table2, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Calculator, Grid3X3, Map as MapIcon, Search, Table2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import type { NodeBasicInfo } from "@/contexts/NodeListContext";
-import type { LiveData } from "../types/LiveData";
-import { NodeGrid } from "./Node";
-const NodeTable = React.lazy(() => import("./NodeTable"));
-import { isRegionMatch } from "@/utils/regionHelper";
-import "./NodeDisplay.css";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { NodeBasicInfo } from "@/contexts/NodeListContext";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { dispatchOpenRemainingValueCalculatorEvent } from "@/lib/remainingValueEvents";
 import { cn } from "@/lib/utils";
+import { isRegionMatch } from "@/utils/regionHelper";
+import type { LiveData } from "../types/LiveData";
+import { NodeGrid } from "./Node";
+import { NodeMapView } from "./NodeMapView";
+import { NodeDetailsPanel } from "./instance/NodeDetailsPanel";
+import NodeTable from "./NodeTable";
 
-export type ViewMode = "grid" | "table";
+import "./NodeDisplay.css";
+
+export type ViewMode = "grid" | "table" | "map";
 
 interface NodeDisplayProps {
   nodes: NodeBasicInfo[];
@@ -23,18 +27,25 @@ interface NodeDisplayProps {
 
 const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
   const [t] = useTranslation();
-  const [viewMode, setViewMode] = useLocalStorage<ViewMode>(
-    "nodeViewMode",
-    "grid"
-  );
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("nodeViewMode", "map");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGroup, setSelectedGroup] = useLocalStorage<string>(
-    "nodeSelectedGroup",
-    "all"
-  );
+  const [selectedGroup, setSelectedGroup] = useLocalStorage<string>("nodeSelectedGroup", "all");
+  const [selectedNodeUuid, setSelectedNodeUuid] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // 获取所有的分组
+  const handleOpenNodeDetails = (uuid: string) => {
+    setSelectedNodeUuid(uuid);
+    setDetailsOpen(true);
+  };
+
+  const handleDetailsOpenChange = (open: boolean) => {
+    setDetailsOpen(open);
+    if (!open) {
+      setSelectedNodeUuid(null);
+    }
+  };
+
   const groups = useMemo(() => {
     const groupSet = new Set<string>();
     nodes.forEach((node) => {
@@ -45,19 +56,16 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
     return Array.from(groupSet).sort();
   }, [nodes]);
 
-  // 判断是否显示分组选择器
   const showGroupSelector = groups.length >= 1;
 
-  // 键盘快捷键支持
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // 按 "/" 键聚焦搜索框
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
         searchRef.current?.focus();
       }
-      // 按 Escape 键清空搜索
-      if (e.key === "Escape" && searchTerm) {
+
+      if (event.key === "Escape" && searchTerm) {
         setSearchTerm("");
         searchRef.current?.blur();
       }
@@ -67,34 +75,26 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [searchTerm]);
 
-  // 过滤节点
   const filteredNodes = useMemo(() => {
     let result = nodes;
 
-    // 先按分组过滤
     if (selectedGroup !== "all") {
       result = result.filter((node) => node.group === selectedGroup);
     }
 
-    // 再按搜索条件过滤
-    if (!searchTerm.trim()) return result;
+    if (!searchTerm.trim()) {
+      return result;
+    }
 
     const term = searchTerm.toLowerCase().trim();
     return result.filter((node) => {
-      // 基本信息搜索
       const basicMatch =
         node.name.toLowerCase().includes(term) ||
         node.os.toLowerCase().includes(term) ||
         node.arch.toLowerCase().includes(term);
 
-      // 地区搜索（支持emoji和地区名称）
       const regionMatch = isRegionMatch(node.region, term);
-
-      // 价格搜索（如果输入数字）
-      const priceMatch =
-        !isNaN(Number(term)) && node.price.toString().includes(term);
-
-      // 状态搜索
+      const priceMatch = !Number.isNaN(Number(term)) && node.price.toString().includes(term);
       const isOnline = liveData?.online?.includes(node.uuid) || false;
       const statusMatch =
         ((term === "online" || term === "在线") && isOnline) ||
@@ -102,29 +102,54 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
 
       return basicMatch || regionMatch || priceMatch || statusMatch;
     });
-  }, [nodes, searchTerm, liveData, selectedGroup]);
+  }, [liveData, nodes, searchTerm, selectedGroup]);
+
+  const onlineCount =
+    selectedGroup === "all"
+      ? liveData?.online?.length || 0
+      : filteredNodes.filter((node) => liveData?.online?.includes(node.uuid)).length;
+
+  const statusText = searchTerm.trim()
+    ? t("search.results", {
+        count: filteredNodes.length,
+        total:
+          selectedGroup === "all"
+            ? nodes.length
+            : nodes.filter((node) => node.group === selectedGroup).length,
+        defaultValue: `找到 ${filteredNodes.length} 个节点`,
+      })
+    : selectedGroup === "all"
+      ? t("nodeCard.totalNodes", {
+          total: nodes.length,
+          online: onlineCount,
+          defaultValue: `共 ${nodes.length} 个服务器，${onlineCount} 个在线`,
+        })
+      : t("nodeCard.groupNodes", {
+          group: selectedGroup,
+          total: filteredNodes.length,
+          online: onlineCount,
+          defaultValue: `${selectedGroup} 分组共 ${filteredNodes.length} 个服务器，${onlineCount} 个在线`,
+        });
 
   return (
     <div className="w-full space-y-6">
-      {/* Control Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-        {/* Search Box */}
-        <div className="relative flex-1 max-w-lg group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+      <div className="flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
+        <div className="group relative max-w-lg flex-1">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
             ref={searchRef}
             placeholder={t("search.placeholder", {
-              defaultValue: "Search nodes... (Press '/' to focus)",
+              defaultValue: "搜索节点...（按 / 快速聚焦）",
             })}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10 h-11 bg-card border-none shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="h-11 border-none bg-card pl-10 pr-10 shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-primary/20"
           />
           {searchTerm && (
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+              className="absolute right-1.5 top-1/2 h-8 w-8 -translate-y-1/2 hover:bg-transparent"
               onClick={() => {
                 setSearchTerm("");
                 searchRef.current?.focus();
@@ -135,9 +160,17 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           )}
         </div>
 
-        {/* View Mode & Group Selector */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border shadow-sm">
+          <div className="flex items-center gap-1 rounded-lg border bg-muted/50 p-1 shadow-sm">
+            <Button
+              variant={viewMode === "map" ? "secondary" : "ghost"}
+              size="sm"
+              className={cn("h-8 gap-2 px-3", viewMode === "map" && "bg-card shadow-sm")}
+              onClick={() => setViewMode("map")}
+            >
+              <MapIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("common.map", { defaultValue: "地图" })}</span>
+            </Button>
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
@@ -145,7 +178,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               onClick={() => setViewMode("grid")}
             >
               <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">卡片</span>
             </Button>
             <Button
               variant={viewMode === "table" ? "secondary" : "ghost"}
@@ -154,20 +187,19 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
               onClick={() => setViewMode("table")}
             >
               <Table2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Table</span>
+              <span className="hidden sm:inline">列表</span>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Group Selector & Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         {showGroupSelector && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="scrollbar-none flex items-center gap-2 overflow-x-auto pb-1">
             <Tabs value={selectedGroup} onValueChange={setSelectedGroup} className="w-auto">
-              <TabsList className="h-10 bg-muted/50 p-1 border">
+              <TabsList className="h-10 border bg-muted/50 p-1">
                 <TabsTrigger value="all" className="px-4">
-                  {t("common.all", { defaultValue: "All" })}
+                  {t("common.all", { defaultValue: "全部" })}
                 </TabsTrigger>
                 {groups.map((group) => (
                   <TabsTrigger key={group} value={group} className="px-4">
@@ -179,70 +211,60 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           </div>
         )}
 
-        {/* Results Stats */}
-        <div className="flex items-center gap-2 px-1">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          {searchTerm.trim() ? (
-            <span className="text-sm font-medium text-muted-foreground">
-              {t("search.results", {
-                count: filteredNodes.length,
-                total:
-                  selectedGroup === "all"
-                    ? nodes.length
-                    : nodes.filter((n) => n.group === selectedGroup).length,
-                defaultValue: `Found ${filteredNodes.length} nodes`,
-              })}
-            </span>
-          ) : (
-            <span className="text-sm font-medium text-muted-foreground">
-              {selectedGroup === "all"
-                ? t("nodeCard.totalNodes", {
-                    total: nodes.length,
-                    online: liveData?.online?.length || 0,
-                    defaultValue: `${liveData?.online?.length || 0} Online / ${nodes.length} Total`,
-                  })
-                : t("nodeCard.groupNodes", {
-                    group: selectedGroup,
-                    total: filteredNodes.length,
-                    online: filteredNodes.filter((n) =>
-                      liveData?.online?.includes(n.uuid)
-                    ).length,
-                    defaultValue: `${filteredNodes.filter((n) => liveData?.online?.includes(n.uuid)).length} Online in ${selectedGroup}`,
-                  })}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+          <span className="text-sm font-medium text-muted-foreground">{statusText}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-2 rounded-full px-3"
+            onClick={dispatchOpenRemainingValueCalculatorEvent}
+          >
+            <Calculator className="h-4 w-4" />
+            <span>剩余价值计算器</span>
+          </Button>
         </div>
       </div>
 
-      {/* Node Display Area */}
       {filteredNodes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-muted/20 rounded-lg border border-dashed">
-          <span className="text-lg text-muted-foreground mb-2">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 py-16">
+          <span className="mb-2 text-lg text-muted-foreground">
             {searchTerm.trim()
-              ? t("search.no_results", { defaultValue: "No matching nodes found" })
-              : t("nodes.empty", { defaultValue: "No node data" })}
+              ? t("search.no_results", { defaultValue: "没有找到匹配的节点" })
+              : t("nodes.empty", { defaultValue: "暂无节点数据" })}
           </span>
           {searchTerm.trim() && (
             <span className="text-sm text-muted-foreground">
               {t("search.try_different", {
-                defaultValue: "Try different keywords",
+                defaultValue: "试试别的关键词",
               })}
             </span>
           )}
         </div>
+      ) : viewMode === "grid" ? (
+        <NodeGrid
+          key="grid-view"
+          nodes={filteredNodes}
+          liveData={liveData}
+          onOpenNodeDetails={handleOpenNodeDetails}
+        />
+      ) : viewMode === "map" ? (
+        <NodeMapView
+          key="map-view"
+          nodes={filteredNodes}
+          liveData={liveData}
+          onOpenNodeDetails={handleOpenNodeDetails}
+        />
       ) : (
-        <>
-          {viewMode === "grid" ? (
-            <NodeGrid nodes={filteredNodes} liveData={liveData} />
-          ) : (
-            <Suspense
-              fallback={<div className="p-4 text-center">Loading table...</div>}
-            >
-              <NodeTable nodes={filteredNodes} liveData={liveData} />
-            </Suspense>
-          )}
-        </>
+        <NodeTable key="table-view" nodes={filteredNodes} liveData={liveData} />
       )}
+
+      <NodeDetailsPanel
+        open={detailsOpen}
+        onOpenChange={handleDetailsOpenChange}
+        uuid={selectedNodeUuid}
+      />
     </div>
   );
 };

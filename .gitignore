@@ -80,3 +80,6 @@ bundle-analysis.html
 
 # Testing
 *.lcov
+
+# Local worktrees
+.worktrees/

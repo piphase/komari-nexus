@@ -90,13 +90,16 @@ interface NodeProps {
   basic: NodeBasicInfo;
   live: Record | undefined;
   online: boolean;
+  onOpenNodeDetails?: (uuid: string) => void;
 }
 
-const Node = ({ basic, live, online }: NodeProps) => {
+const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
   const [t] = useTranslation();
   const isMobile = useIsMobile();
   const { themeConfig } = useTheme();
   const pingStats = usePingStats(basic.uuid, 24);
+  const isClassicInteractive =
+    themeConfig.cardLayout === "classic" && !!onOpenNodeDetails;
 
   const defaultLive = {
     cpu: { usage: 0 },
@@ -163,10 +166,37 @@ const Node = ({ basic, live, online }: NodeProps) => {
     detailed: "pb-4 pt-0 px-5 flex justify-between items-center bg-muted/30 border-t-2",
   };
 
+  const openNodeDetails = () => {
+    if (!isClassicInteractive) {
+      return;
+    }
+
+    onOpenNodeDetails?.(basic.uuid);
+  };
+
+  const stopNodeDetailsOpen = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
+  };
+
   return (
     <Card
       id={basic.uuid}
-      className={cardStyles[themeConfig.cardLayout] || cardStyles.classic}
+      className={`${cardStyles[themeConfig.cardLayout] || cardStyles.classic} ${
+        isClassicInteractive ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/30" : ""
+      }`}
+      role={isClassicInteractive ? "button" : undefined}
+      tabIndex={isClassicInteractive ? 0 : undefined}
+      onClick={openNodeDetails}
+      onKeyDown={
+        isClassicInteractive
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openNodeDetails();
+              }
+            }
+          : undefined
+      }
     >
       {/* Header: Identity & Status */}
       <CardHeader className={headerStyles[themeConfig.cardLayout] || headerStyles.classic}>
@@ -180,18 +210,37 @@ const Node = ({ basic, live, online }: NodeProps) => {
             )}
             <div className="flex flex-col flex-1 min-w-0">
               <div className="flex flex-row min-w-0 items-center">
-                <Link href={`/instance/${basic.uuid}`} className="group-hover:text-primary transition-colors overflow-hidden flex-1">
-                  <h3 className={`font-bold truncate pr-2 tracking-tight ${
-                    themeConfig.cardLayout === 'detailed' ? 'text-lg' : 'text-base'
-                  }`}>{basic.name}</h3>
-                </Link>
+                {isClassicInteractive ? (
+                  <div className="group-hover:text-primary transition-colors overflow-hidden flex-1">
+                    <h3
+                      className={`font-bold truncate pr-2 tracking-tight ${
+                        themeConfig.cardLayout === 'detailed' ? 'text-lg' : 'text-base'
+                      }`}
+                    >
+                      {basic.name}
+                    </h3>
+                  </div>
+                ) : (
+                  <Link href={`/instance/${basic.uuid}`} className="group-hover:text-primary transition-colors overflow-hidden flex-1">
+                    <h3 className={`font-bold truncate pr-2 tracking-tight ${
+                      themeConfig.cardLayout === 'detailed' ? 'text-lg' : 'text-base'
+                    }`}>{basic.name}</h3>
+                  </Link>
+                )}
                 <div className="flex items-center gap-1 shrink-0">
                   {live?.message && <Tips color="#CE282E">{live.message}</Tips>}
                   <MiniPingChartFloat
                     uuid={basic.uuid}
                     hours={24}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={stopNodeDetailsOpen}
+                        onMouseDown={stopNodeDetailsOpen}
+                        onKeyDown={stopNodeDetailsOpen}
+                      >
                         <TrendingUp className="h-4 w-4" />
                       </Button>
                     }
@@ -348,9 +397,10 @@ export default Node;
 type NodeGridProps = {
   nodes: NodeBasicInfo[];
   liveData: LiveData;
+  onOpenNodeDetails?: (uuid: string) => void;
 };
 
-export const NodeGrid = ({ nodes, liveData }: NodeGridProps) => {
+export const NodeGrid = ({ nodes, liveData, onOpenNodeDetails }: NodeGridProps) => {
   // Ensure liveData is valid
   const onlineNodes = liveData && liveData.online ? liveData.online : [];
 
@@ -386,6 +436,7 @@ export const NodeGrid = ({ nodes, liveData }: NodeGridProps) => {
             basic={node}
             live={nodeData}
             online={isOnline}
+            onOpenNodeDetails={onOpenNodeDetails}
           />
         );
       })}
