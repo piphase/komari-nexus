@@ -93,11 +93,21 @@ describe("VisitorInfoPanel", () => {
     });
 
     expect(within(panel).getByTestId("flag-AR")).toBeInTheDocument();
+    expect(panel).toHaveClass("bg-card/92");
+    expect(panel).toHaveClass("ring-1");
+    expect(panel).toHaveClass("dark:ring-white/12");
     expect(within(panel).getByText("203.0.113.7")).toHaveClass("text-sm");
     expect(within(panel).getByText(/Buenos Aires Autonomous City/)).toBeInTheDocument();
-    expect(within(panel).getByText(/Example Telecom/)).toBeInTheDocument();
+    const organizationText = within(panel).getByText(/Example Telecom/);
+    expect(organizationText).toBeInTheDocument();
+    expect(organizationText.parentElement).toHaveClass("bg-muted/55");
+    expect(organizationText.parentElement).toHaveClass("border");
+    expect(organizationText.parentElement).toHaveClass("shadow-inner");
 
     const reopenButton = screen.getByTestId("visitor-info-toggle");
+    expect(reopenButton).toHaveClass("bg-card/95");
+    expect(reopenButton).toHaveClass("ring-1");
+    expect(reopenButton).toHaveClass("dark:ring-white/12");
 
     expect(panel).toHaveAttribute("data-state", "open");
     expect(reopenButton).toHaveAttribute("data-state", "hidden");

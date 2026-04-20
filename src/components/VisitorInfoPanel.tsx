@@ -236,8 +236,8 @@ export default function VisitorInfoPanel() {
         onMouseEnter={pauseAutoHide}
         onMouseLeave={restartAutoHide}
         className={[
-          "fixed bottom-6 left-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70",
-          "bg-background/90 shadow-2xl backdrop-blur-xl transition-all duration-500 ease-out will-change-transform",
+          "fixed bottom-6 left-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/80 ring-1 ring-white/10 dark:ring-white/12",
+          "bg-card/92 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all duration-500 ease-out will-change-transform",
           open
             ? "translate-x-0 scale-100 opacity-100"
             : "-translate-x-[120%] scale-95 opacity-0 pointer-events-none",
@@ -278,7 +278,7 @@ export default function VisitorInfoPanel() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-100/85 px-4 py-3 text-center text-sm text-slate-700">
+          <div className="rounded-2xl border border-border/70 bg-muted/55 px-4 py-3 text-center text-sm text-muted-foreground shadow-inner shadow-black/5 backdrop-blur-sm">
             <div className="break-words font-medium text-foreground">{state.organization}</div>
           </div>
         </div>
@@ -291,8 +291,8 @@ export default function VisitorInfoPanel() {
         data-state={!hasPresented || open ? "hidden" : "visible"}
         onClick={reopen}
         className={[
-          "fixed bottom-6 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-border/70",
-          "bg-background/90 shadow-lg backdrop-blur-xl transition-all duration-300",
+          "fixed bottom-6 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-border/80 ring-1 ring-white/10 dark:ring-white/12",
+          "bg-card/95 shadow-[0_12px_28px_rgba(15,23,42,0.18)] dark:shadow-[0_14px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_16px_32px_rgba(15,23,42,0.2)] dark:hover:shadow-[0_16px_34px_rgba(0,0,0,0.46)]",
           !hasPresented || open
             ? "pointer-events-none scale-90 opacity-0"
             : "pointer-events-auto scale-100 opacity-100",

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -135,6 +135,9 @@ const demoLiveData = {
 } as const;
 
 describe("NodeDisplay classic cards", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
   it("uses 中文视图切换文案并默认进入地图视图", () => {
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
@@ -168,6 +171,27 @@ describe("NodeDisplay classic cards", () => {
     expect(screen.queryByText("全球分布")).not.toBeInTheDocument();
   });
 
+  it("keeps the current view button visibly highlighted", async () => {
+    const user = userEvent.setup();
+
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
+
+    const mapButton = screen.getByRole("button", { name: "地图" });
+    const tableButton = screen.getByRole("button", { name: "列表" });
+
+    expect(mapButton.className).toContain("border-border/80");
+    expect(mapButton.className).toContain("ring-1");
+    expect(mapButton.className).toContain("text-foreground");
+    expect(tableButton.className).toContain("text-muted-foreground");
+
+    await user.click(tableButton);
+
+    expect(tableButton.className).toContain("border-border/80");
+    expect(tableButton.className).toContain("ring-1");
+    expect(tableButton.className).toContain("text-foreground");
+    expect(mapButton.className).toContain("text-muted-foreground");
+  });
+
   it("shows a remaining value calculator entry and dispatches the shared open event", async () => {
     const user = userEvent.setup();
     const dispatchEventSpy = vi.spyOn(window, "dispatchEvent");
@@ -183,5 +207,14 @@ describe("NodeDisplay classic cards", () => {
         type: "open-remaining-value-calculator",
       }),
     );
+  });
+  it("keeps the remaining value calculator entry visually aligned with the dark card style", () => {
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
+
+    const openButton = screen.getByRole("button", { name: "剩余价值计算器" });
+
+    expect(openButton.className).toContain("bg-card/95");
+    expect(openButton.className).toContain("border-border/80");
+    expect(openButton.className).toContain("ring-1");
   });
 });

@@ -165,7 +165,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
             <Button
               variant={viewMode === "map" ? "secondary" : "ghost"}
               size="sm"
-              className={cn("h-8 gap-2 px-3", viewMode === "map" && "bg-card shadow-sm")}
+              className={cn(
+                "h-8 gap-2 rounded-md border border-transparent px-3",
+                viewMode === "map"
+                  ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
               onClick={() => setViewMode("map")}
             >
               <MapIcon className="h-4 w-4" />
@@ -174,7 +179,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
-              className={cn("h-8 gap-2 px-3", viewMode === "grid" && "bg-card shadow-sm")}
+              className={cn(
+                "h-8 gap-2 rounded-md border border-transparent px-3",
+                viewMode === "grid"
+                  ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
               onClick={() => setViewMode("grid")}
             >
               <Grid3X3 className="h-4 w-4" />
@@ -183,7 +193,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
             <Button
               variant={viewMode === "table" ? "secondary" : "ghost"}
               size="sm"
-              className={cn("h-8 gap-2 px-3", viewMode === "table" && "bg-card shadow-sm")}
+              className={cn(
+                "h-8 gap-2 rounded-md border border-transparent px-3",
+                viewMode === "table"
+                  ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
               onClick={() => setViewMode("table")}
             >
               <Table2 className="h-4 w-4" />
@@ -216,9 +231,9 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           <span className="text-sm font-medium text-muted-foreground">{statusText}</span>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-8 gap-2 rounded-full px-3"
+            className="h-8 gap-2 rounded-full border border-border/80 bg-card/95 px-3 text-foreground shadow-sm ring-1 ring-white/10 transition-all hover:bg-card hover:shadow-md dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.4)]"
             onClick={dispatchOpenRemainingValueCalculatorEvent}
           >
             <Calculator className="h-4 w-4" />

@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNodeList } from "@/contexts/NodeListContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMounted } from "@/hooks/useMounted";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { type LoadedRates, convertAmount, loadRates } from "@/lib/exchangeRates";
 import { OPEN_REMAINING_VALUE_CALCULATOR_EVENT } from "@/lib/remainingValueEvents";
@@ -93,7 +94,7 @@ function ActiveNodeCard({
   displayCurrency: DisplayCurrency;
 }) {
   return (
-    <article className="rounded-2xl border border-border/60 p-4">
+    <article className="rounded-2xl border border-border/60 bg-muted/35 p-4 shadow-sm shadow-black/5">
       <div className="flex items-center justify-between gap-3">
         <div className="font-medium">{item.name}</div>
         <div className="text-sm font-semibold">
@@ -116,7 +117,7 @@ function ActiveNodeCard({
 
 function SkippedNodeCard({ item }: { item: SkippedRemainingValueNode }) {
   return (
-    <article className="rounded-2xl border border-dashed border-border/60 p-4">
+    <article className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-4 shadow-sm shadow-black/5">
       <div className="font-medium">{item.name}</div>
       <div className="mt-2 text-sm text-muted-foreground">未纳入原因</div>
       <div className="mt-1 text-sm text-foreground/80">{getSkipReasonLabel(item.skipReason)}</div>
@@ -126,7 +127,7 @@ function SkippedNodeCard({ item }: { item: SkippedRemainingValueNode }) {
 
 function ExpiredNodeCard({ item }: { item: RemainingValueNode }) {
   return (
-    <article className="rounded-2xl border border-dashed border-border/60 p-4">
+    <article className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-4 shadow-sm shadow-black/5">
       <div className="font-medium">{item.name}</div>
       <div className="mt-2 text-sm text-muted-foreground">
         原价 {item.currencySymbol}
@@ -138,7 +139,8 @@ function ExpiredNodeCard({ item }: { item: RemainingValueNode }) {
 }
 
 export default function RemainingValueCalculator() {
-  const [t] = useTranslation();
+  const { t, ready } = useTranslation();
+  const mounted = useMounted();
   const isMobile = useIsMobile();
   const { nodeList } = useNodeList();
   const [open, setOpen] = useState(false);
@@ -364,7 +366,7 @@ export default function RemainingValueCalculator() {
   const panelBody = (
     <div
       data-testid="remaining-value-panel"
-      className="flex max-h-[min(85vh,48rem)] flex-col overflow-hidden rounded-3xl bg-background"
+      className="flex max-h-[min(85vh,48rem)] flex-col overflow-hidden rounded-3xl border border-border/80 bg-card/95 ring-1 ring-white/10 shadow-[0_20px_44px_rgba(15,23,42,0.18)] dark:ring-white/12 dark:shadow-[0_20px_44px_rgba(0,0,0,0.42)]"
     >
       <div className="space-y-4 border-b border-border/70 px-5 py-4">
         <div className="text-base font-semibold">{titleText}</div>
@@ -403,7 +405,7 @@ export default function RemainingValueCalculator() {
           onValueChange={(value) => setDisplayCurrency(value as DisplayCurrency)}
           className="max-w-full"
         >
-          <TabsList className="h-10 w-fit max-w-full justify-start rounded-xl border bg-muted/50 p-1">
+          <TabsList className="h-10 w-fit max-w-full justify-start rounded-xl border bg-muted/45 p-1">
             {DISPLAY_CURRENCIES.map((currency) => (
               <TabsTrigger key={currency} value={currency} className="min-w-16 rounded-lg px-4">
                 {currency}
@@ -414,7 +416,7 @@ export default function RemainingValueCalculator() {
       </div>
 
       <div className="space-y-4 overflow-y-auto px-5 py-4">
-        <section className="rounded-2xl bg-muted/40 p-4">
+        <section className="rounded-2xl border border-border/60 bg-muted/55 p-4 shadow-inner shadow-black/5">
           <div className="text-xs text-muted-foreground">
             {t("remainingValue.total", { defaultValue: "全部剩余价值" })}
           </div>
@@ -428,7 +430,7 @@ export default function RemainingValueCalculator() {
           onValueChange={(value) => setDetailFilter(value as DetailFilter)}
           className="max-w-full"
         >
-          <TabsList className="h-auto w-fit max-w-full flex-wrap justify-start gap-2 rounded-2xl border bg-muted/30 p-2">
+          <TabsList className="h-auto w-fit max-w-full flex-wrap justify-start gap-2 rounded-2xl border bg-muted/40 p-2">
             {filterOptions.map((option) => (
               <TabsTrigger key={option.value} value={option.value} className="rounded-xl px-4 py-2">
                 {option.label}
@@ -442,13 +444,17 @@ export default function RemainingValueCalculator() {
     </div>
   );
 
+  if (!mounted || !ready) {
+    return null;
+  }
+
   return (
     <>
       <button
         type="button"
         aria-label={titleText}
         onClick={() => void handleOpenChange(!open)}
-        className="fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-background/90 shadow-lg backdrop-blur-xl transition-all duration-300 hover:scale-105"
+        className="fixed bottom-6 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-card/95 ring-1 ring-white/10 shadow-[0_12px_28px_rgba(15,23,42,0.18)] dark:ring-white/12 dark:shadow-[0_14px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_16px_32px_rgba(15,23,42,0.22)] dark:hover:shadow-[0_16px_34px_rgba(0,0,0,0.46)]"
       >
         <Calculator className="h-5 w-5 text-primary" />
       </button>

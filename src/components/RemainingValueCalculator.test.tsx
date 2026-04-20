@@ -4,17 +4,30 @@ import userEvent from "@testing-library/user-event";
 
 import RemainingValueCalculator from "@/components/RemainingValueCalculator";
 
+let translationReady = true;
+let mounted = true;
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => {
     const translate = (key: string, options?: Record<string, unknown>) =>
       typeof options?.defaultValue === "string" ? options.defaultValue : key;
 
-    return Object.assign([translate], { t: translate });
+    return {
+      t: translate,
+      i18n: {
+        isInitialized: translationReady,
+      },
+      ready: translationReady,
+    };
   },
 }));
 
 vi.mock("@/hooks/use-mobile", () => ({
   useIsMobile: () => false,
+}));
+
+vi.mock("@/hooks/useMounted", () => ({
+  useMounted: () => mounted,
 }));
 
 vi.mock("@/contexts/NodeListContext", () => ({
@@ -157,7 +170,26 @@ describe("RemainingValueCalculator", () => {
   afterEach(() => {
     localStorage.clear();
     global.fetch = originalFetch;
+    translationReady = true;
+    mounted = true;
     vi.restoreAllMocks();
+  });
+
+  it("waits for mount and i18n readiness before rendering the calculator entry", () => {
+    mounted = false;
+    translationReady = false;
+
+    const { rerender } = render(<RemainingValueCalculator />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    mounted = true;
+    rerender(<RemainingValueCalculator />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    translationReady = true;
+    rerender(<RemainingValueCalculator />);
+    expect(screen.getByRole("button", { name: "剩余价值计算器" })).toBeInTheDocument();
   });
 
   it("opens from the floating button and uses content-width tab groups plus a refresh button", async () => {
@@ -169,10 +201,19 @@ describe("RemainingValueCalculator", () => {
 
     expect(screen.queryByTestId("remaining-value-panel")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "剩余价值计算器" }));
+    const floatingButton = screen.getByRole("button", { name: "剩余价值计算器" });
+    expect(floatingButton).toHaveClass("bg-card/95");
+    expect(floatingButton).toHaveClass("ring-1");
+    expect(floatingButton).toHaveClass("dark:ring-white/12");
 
-    expect(await screen.findByTestId("remaining-value-panel")).toBeInTheDocument();
+    await user.click(floatingButton);
+
+    const panel = await screen.findByTestId("remaining-value-panel");
+    expect(panel).toHaveClass("bg-card/95");
+    expect(panel).toHaveClass("ring-1");
+    expect(panel).toHaveClass("dark:ring-white/12");
     expect(screen.getByText("CNY 152.00")).toBeInTheDocument();
+    expect(screen.getByText("CNY 152.00").closest("section")).toHaveClass("bg-muted/55");
     expect(screen.getByRole("tab", { name: "CNY" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "USD" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "EUR" })).toBeInTheDocument();

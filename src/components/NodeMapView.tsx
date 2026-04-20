@@ -44,6 +44,23 @@ function getUnmappedRegionLabel(region: string) {
   return normalizedRegion || "未填写";
 }
 
+function getRegionStatusBadgeClass(status: "online" | "offline" | "partial") {
+  switch (status) {
+    case "online":
+      return "bg-emerald-500/12 text-emerald-700 dark:bg-emerald-500/18 dark:text-emerald-300";
+    case "offline":
+      return "bg-rose-500/12 text-rose-700 dark:bg-rose-500/18 dark:text-rose-300";
+    default:
+      return "bg-amber-500/14 text-amber-700 dark:bg-amber-500/18 dark:text-amber-300";
+  }
+}
+
+function getNodeStatusBadgeClass(online: boolean) {
+  return online
+    ? "bg-emerald-500/12 text-emerald-700 dark:bg-emerald-500/18 dark:text-emerald-300"
+    : "bg-rose-500/12 text-rose-700 dark:bg-rose-500/18 dark:text-rose-300";
+}
+
 export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewProps) {
   const { t } = useTranslation();
   const summary = useMemo(() => buildMapViewSummary(nodes, liveData), [nodes, liveData]);
@@ -112,25 +129,25 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
 
   if (!summary.totalNodes) {
     return (
-      <Card className="overflow-hidden rounded-[28px] border-slate-200/80 bg-card/95 shadow-sm">
+      <Card className="overflow-hidden rounded-[28px] border-border/70 bg-card/95 shadow-sm">
         <CardHeader>
           <CardTitle>{t("mapView.title", { defaultValue: "全球分布" })}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-3xl border border-dashed border-border/70 bg-muted/40 px-6 py-12 text-center text-sm text-muted-foreground">
             {t("nodes.empty", { defaultValue: "暂无节点数据" })}
-            </div>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="node-map-view overflow-hidden rounded-[28px] border-slate-200/80 bg-card/95 shadow-sm">
-      <CardHeader className="space-y-4 border-b border-slate-100/80 pb-5">
+    <Card className="node-map-view overflow-hidden rounded-[28px] border-border/70 bg-card/95 shadow-sm">
+      <CardHeader className="space-y-4 border-b border-border/70 pb-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-700 dark:bg-sky-500/14 dark:text-sky-300">
               <MapPinned className="h-3.5 w-3.5" />
               {t("common.map", { defaultValue: "地图" })}
             </div>
@@ -146,19 +163,28 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="rounded-full bg-slate-100 text-slate-700">
+            <Badge
+              variant="secondary"
+              className="rounded-full bg-muted px-3 py-1 text-muted-foreground"
+            >
               {t("mapView.servers", {
                 count: summary.totalNodes,
                 defaultValue: `${summary.totalNodes} 台节点`,
               })}
             </Badge>
-            <Badge variant="secondary" className="rounded-full bg-emerald-50 text-emerald-700">
+            <Badge
+              variant="secondary"
+              className="rounded-full bg-emerald-500/12 px-3 py-1 text-emerald-700 dark:bg-emerald-500/18 dark:text-emerald-300"
+            >
               {t("mapView.online", {
                 count: summary.onlineNodes,
                 defaultValue: `${summary.onlineNodes} 台在线`,
               })}
             </Badge>
-            <Badge variant="secondary" className="rounded-full bg-rose-50 text-rose-700">
+            <Badge
+              variant="secondary"
+              className="rounded-full bg-rose-500/12 px-3 py-1 text-rose-700 dark:bg-rose-500/18 dark:text-rose-300"
+            >
               {t("mapView.offline", {
                 count: summary.offlineNodes,
                 defaultValue: `${summary.offlineNodes} 台离线`,
@@ -227,12 +253,12 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               {summary.unmappedNodes.length > 0 && (
                 <div className="node-map-view__legend-card node-map-view__legend-card--stacked">
                   <div className="node-map-view__legend-unmapped-header">
-                    <span className="text-xs font-semibold text-slate-700">未显示地区</span>
+                    <span className="text-xs font-semibold text-foreground">未显示地区</span>
                     <Badge
                       variant="secondary"
-                      className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-700"
+                      className="rounded-full bg-amber-500/12 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/18 dark:text-amber-300"
                     >
-                      {`共 ${summary.unmappedNodes.length} 个`}
+                      {`共 ${summary.unmappedNodes.length} 项`}
                     </Badge>
                   </div>
                   <div className="node-map-view__legend-unmapped-list">
@@ -259,43 +285,43 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                       <Flag flag={selectedRegion.emoji} />
                     </span>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+                      <h3 className="text-xl font-semibold tracking-tight text-foreground">
                         {selectedRegion.label}
                       </h3>
-                      <p className="text-sm text-slate-500">{`该地区共 ${selectedRegion.total} 台节点`}</p>
+                      <p className="text-sm text-muted-foreground">{`该地区共 ${selectedRegion.total} 台节点`}</p>
                     </div>
                   </div>
 
                   <Badge
                     variant="secondary"
-                    className={`shrink-0 whitespace-nowrap rounded-full ${
-                      selectedRegion.status === "online"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : selectedRegion.status === "offline"
-                          ? "bg-rose-50 text-rose-700"
-                          : "bg-amber-50 text-amber-700"
-                    }`}
+                    className={`shrink-0 whitespace-nowrap rounded-full ${getRegionStatusBadgeClass(selectedRegion.status)}`}
                   >
                     {getStatusText(selectedRegion.status)}
                   </Badge>
                 </div>
 
                 <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">节点数</div>
-                    <div className="mt-2 text-2xl font-semibold text-slate-900">
+                  <div className="rounded-2xl border border-border/60 bg-muted/50 px-4 py-4">
+                    <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      节点数
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-foreground">
                       {selectedRegion.total}
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-emerald-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-emerald-700">在线</div>
-                    <div className="mt-2 text-2xl font-semibold text-emerald-900">
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 dark:border-emerald-500/25 dark:bg-emerald-500/14">
+                    <div className="text-xs uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+                      在线
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-emerald-900 dark:text-emerald-200">
                       {selectedRegion.online}
                     </div>
                   </div>
-                  <div className="rounded-2xl bg-rose-50 px-4 py-4">
-                    <div className="text-xs uppercase tracking-[0.16em] text-rose-700">离线</div>
-                    <div className="mt-2 text-2xl font-semibold text-rose-900">
+                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 dark:border-rose-500/25 dark:bg-rose-500/14">
+                    <div className="text-xs uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
+                      离线
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-rose-900 dark:text-rose-200">
                       {selectedRegion.offline}
                     </div>
                   </div>
@@ -310,19 +336,19 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                       <button
                         key={node.uuid}
                         type="button"
-                        className="node-map-view__node-card"
+                        className="node-map-view__node-card bg-card/80"
                         onClick={() => onOpenNodeDetails?.(node.uuid)}
                         aria-label={`查看 ${node.name} 详情`}
                       >
                         <div className="min-w-0 text-left">
-                          <div className="truncate font-medium text-slate-900">{node.name}</div>
-                          <div className="truncate text-xs text-slate-500">{secondaryText}</div>
+                          <div className="truncate font-medium text-foreground">{node.name}</div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {secondaryText}
+                          </div>
                         </div>
                         <Badge
                           variant="secondary"
-                          className={`shrink-0 whitespace-nowrap rounded-full ${
-                            online ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-                          }`}
+                          className={`shrink-0 whitespace-nowrap rounded-full ${getNodeStatusBadgeClass(online)}`}
                         >
                           {online
                             ? t("nodeCard.online", { defaultValue: "在线" })
@@ -338,11 +364,11 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             {!selectedRegion && (
               <div className="node-map-view__detail-card node-map-view__detail-card--empty">
                 <div className="node-map-view__detail-empty">
-                  <h3 className="text-lg font-semibold tracking-tight text-slate-900">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">
                     当前没有可显示的地区
                   </h3>
-                  <p className="text-sm leading-6 text-slate-500">
-                    这些节点还在正常统计中，只是地区值暂时没有命中地图映射。先看左侧“未显示地区”列表，就能知道具体是哪一项需要补。
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    这些节点仍在正常统计中，只是地区值暂时没有命中地图映射。先看左侧“未显示地区”列表，就能知道具体是哪一项需要补充。
                   </p>
                 </div>
               </div>

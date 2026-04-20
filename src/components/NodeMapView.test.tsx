@@ -238,6 +238,7 @@ describe("NodeMapView", () => {
     const legend = container.querySelector(".node-map-view__legend");
     const statusLegendCard = container.querySelector(".node-map-view__legend-card--status");
     const statusLegendItems = container.querySelector(".node-map-view__legend-items--stacked");
+
     expect(detailCard).toBeInTheDocument();
     expect(mapSurface).toBeInTheDocument();
     expect(legend).toBeInTheDocument();
@@ -257,8 +258,23 @@ describe("NodeMapView", () => {
     expect(screen.getByText("节点数")).toBeInTheDocument();
     expect(screen.getAllByText("在线")[0]).toBeInTheDocument();
     expect(screen.getAllByText("离线")[0]).toBeInTheDocument();
-
     expect(container.querySelector(".node-map-view__node-list")).toBeInTheDocument();
+  });
+
+  it("uses theme-aware classes for dark-mode-sensitive text and cards in the detail panel", () => {
+    const { container } = render(<NodeMapView nodes={demoNodes} liveData={demoLiveData} />);
+
+    const detailTitle = screen.getAllByText("United States")[0];
+    const detailSubtitle = container.querySelector(".node-map-view__detail-heading p");
+    const nodeName = screen.getByText("Virginia Core");
+    const nodeMeta = screen.getByText("Core");
+    const nodeCard = container.querySelector(".node-map-view__node-card");
+
+    expect(detailTitle).toHaveClass("text-foreground");
+    expect(detailSubtitle).toHaveClass("text-muted-foreground");
+    expect(nodeName).toHaveClass("text-foreground");
+    expect(nodeMeta).toHaveClass("text-muted-foreground");
+    expect(nodeCard).toHaveClass("bg-card/80");
   });
 
   it("keeps compact countries clickable without rendering markers or leader lines", async () => {
@@ -287,7 +303,7 @@ describe("NodeMapView", () => {
     );
 
     expect(screen.getByText("未显示地区")).toBeInTheDocument();
-    expect(screen.getByText("共 1 个")).toBeInTheDocument();
+    expect(screen.getByText("共 1 项")).toBeInTheDocument();
     expect(screen.getByText("Mars Colony")).toBeInTheDocument();
     expect(screen.getByText("Mystery Relay")).toBeInTheDocument();
   });
