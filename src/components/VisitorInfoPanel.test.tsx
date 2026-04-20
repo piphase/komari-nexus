@@ -3,8 +3,6 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import VisitorInfoPanel from "@/components/VisitorInfoPanel";
 
-const CONSENT_KEY = "visitorInfoConsentV1";
-
 vi.mock("@/components/Flag", () => ({
   default: ({ flag }: { flag: string }) => <span data-testid={`flag-${flag}`} />,
 }));
@@ -26,33 +24,21 @@ describe("VisitorInfoPanel", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    localStorage.clear();
     global.fetch = originalFetch;
   });
 
-  it("requires explicit consent before starting third-party visitor lookups", async () => {
-    const fetchMock = vi.fn();
+  it("starts visitor lookups immediately without requiring extra confirmation", () => {
+    const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>(() => {}));
     global.fetch = fetchMock as unknown as typeof fetch;
 
     render(<VisitorInfoPanel />);
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId("visitor-info-toggle")).toHaveAttribute("data-state", "visible");
-
-    fireEvent.click(screen.getByTestId("visitor-info-toggle"));
-
-    expect(screen.getByTestId("visitor-info-consent")).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByTestId("visitor-info-consent-accept"));
-
-    expect(localStorage.getItem(CONSENT_KEY)).toBe("true");
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("visitor-info-toggle")).not.toBeInTheDocument();
   });
 
   it("waits until latency is ready, then animates in before auto-hiding and reopening from the compact button", async () => {
     vi.useFakeTimers();
-    localStorage.setItem(CONSENT_KEY, "true");
 
     let now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => {
@@ -130,7 +116,6 @@ describe("VisitorInfoPanel", () => {
   }, 10000);
 
   it("stays hidden and avoids auto-hide scheduling when metadata fails", async () => {
-    localStorage.setItem(CONSENT_KEY, "true");
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     global.fetch = vi.fn().mockRejectedValue(new Error("network down")) as unknown as typeof fetch;
 
@@ -147,7 +132,6 @@ describe("VisitorInfoPanel", () => {
 
   it("opens with unavailable latency after probing times out", async () => {
     vi.useFakeTimers();
-    localStorage.setItem(CONSENT_KEY, "true");
 
     const pendingLatency = new Promise<Response>(() => {});
     const fetchMock = vi
@@ -197,7 +181,6 @@ describe("VisitorInfoPanel", () => {
   }, 10000);
 
   it("aborts in-flight requests on unmount", () => {
-    localStorage.setItem(CONSENT_KEY, "true");
     const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>(() => {}));
     global.fetch = fetchMock as unknown as typeof fetch;
 

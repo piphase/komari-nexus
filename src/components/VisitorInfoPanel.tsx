@@ -8,7 +8,6 @@ import Flag from "@/components/Flag";
 const AUTO_HIDE_DELAY = 5000;
 const INTRO_DELAY = 32;
 const LATENCY_TIMEOUT = 4000;
-const CONSENT_KEY = "visitorInfoConsentV1";
 const INFO_ENDPOINT = "https://ipinfo.io/json";
 const LATENCY_ENDPOINT = "https://www.cloudflare.com/cdn-cgi/trace";
 const UNAVAILABLE = "不可用";
@@ -17,10 +16,6 @@ const LATENCY_LABEL = "延迟";
 const IP_LABEL = "IP 地址";
 const LOCATION_LABEL = "地理位置";
 const REOPEN_LABEL = "重新展开访客信息";
-const CONSENT_DESCRIPTION =
-  "启用后会向 ipinfo.io 和 Cloudflare 发起网络请求，用于获取 IP、地理位置和延迟信息。";
-const CONSENT_ACCEPT_LABEL = "继续查询";
-const CONSENT_CANCEL_LABEL = "暂不启用";
 
 type VisitorInfoPayload = {
   ip?: string;
@@ -52,12 +47,6 @@ const buildLocation = (city?: string, country?: string) => {
 
   return countryName || city || UNAVAILABLE;
 };
-
-const hasLocalStorage = () =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-
-const getStoredConsent = () =>
-  hasLocalStorage() && window.localStorage.getItem(CONSENT_KEY) === "true";
 
 const measureLatency = async (signal: AbortSignal) => {
   const samples: number[] = [];
@@ -112,8 +101,6 @@ const measureLatencyWithTimeout = async (signal: AbortSignal) =>
   });
 
 export default function VisitorInfoPanel() {
-  const [hasConsent, setHasConsent] = useState(getStoredConsent);
-  const [showConsent, setShowConsent] = useState(false);
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<VisitorInfoState | null>(null);
   const [hasPresented, setHasPresented] = useState(false);
@@ -142,15 +129,6 @@ export default function VisitorInfoPanel() {
   };
 
   useEffect(() => {
-    if (!hasConsent) {
-      clearAutoHide();
-      clearIntroTimer();
-      setOpen(false);
-      setHasPresented(false);
-      setState(null);
-      return;
-    }
-
     let cancelled = false;
     const controller = new AbortController();
 
@@ -211,7 +189,7 @@ export default function VisitorInfoPanel() {
       clearAutoHide();
       clearIntroTimer();
     };
-  }, [hasConsent]);
+  }, []);
 
   const latencyTone = useMemo(() => {
     if (!state || state.latency === UNAVAILABLE) {
@@ -245,64 +223,6 @@ export default function VisitorInfoPanel() {
     setOpen(true);
     startAutoHide();
   };
-
-  const acceptConsent = () => {
-    if (hasLocalStorage()) {
-      window.localStorage.setItem(CONSENT_KEY, "true");
-    }
-
-    setShowConsent(false);
-    setHasConsent(true);
-  };
-
-  if (!hasConsent && !state) {
-    return (
-      <>
-        {showConsent && (
-          <aside
-            data-testid="visitor-info-consent"
-            className="fixed bottom-20 left-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-3xl border border-border/70 bg-background/95 shadow-2xl backdrop-blur-xl"
-          >
-            <div className="space-y-4 p-4 sm:p-5">
-              <div className="space-y-2">
-                <div className="text-sm font-semibold text-foreground">{PANEL_TITLE}</div>
-                <p className="text-sm leading-6 text-muted-foreground">{CONSENT_DESCRIPTION}</p>
-              </div>
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  data-testid="visitor-info-consent-cancel"
-                  onClick={() => setShowConsent(false)}
-                  className="rounded-full border border-border/70 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-                >
-                  {CONSENT_CANCEL_LABEL}
-                </button>
-                <button
-                  type="button"
-                  data-testid="visitor-info-consent-accept"
-                  onClick={acceptConsent}
-                  className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  {CONSENT_ACCEPT_LABEL}
-                </button>
-              </div>
-            </div>
-          </aside>
-        )}
-
-        <button
-          type="button"
-          aria-label={REOPEN_LABEL}
-          data-testid="visitor-info-toggle"
-          data-state="visible"
-          onClick={() => setShowConsent((current) => !current)}
-          className="fixed bottom-6 left-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-background/90 shadow-lg backdrop-blur-xl transition-all duration-300 pointer-events-auto scale-100 opacity-100"
-        >
-          <Activity className="h-4 w-4 text-primary" />
-        </button>
-      </>
-    );
-  }
 
   if (!state) {
     return null;

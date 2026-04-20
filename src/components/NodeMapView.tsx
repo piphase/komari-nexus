@@ -24,6 +24,9 @@ interface NodeMapViewProps {
 
 const SVG_WIDTH = 1000;
 const SVG_HEIGHT = 560;
+const MAP_HORIZONTAL_PADDING = 28;
+const MAP_TOP_PADDING = 34;
+const MAP_BOTTOM_INSET = 56;
 
 function getStatusText(status: "online" | "offline" | "partial") {
   switch (status) {
@@ -71,8 +74,8 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
 
     const projection = geoNaturalEarth1().fitExtent(
       [
-        [28, 34],
-        [SVG_WIDTH - 28, SVG_HEIGHT - 46],
+        [MAP_HORIZONTAL_PADDING, MAP_TOP_PADDING],
+        [SVG_WIDTH - MAP_HORIZONTAL_PADDING, SVG_HEIGHT - MAP_BOTTOM_INSET],
       ],
       countriesGeo as never,
     );
@@ -198,7 +201,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               </g>
             </svg>
 
-            <div className="node-map-view__legend">
+            <div className="node-map-view__legend node-map-view__legend--inset">
               <div className="node-map-view__legend-card">
                 <Globe2 className="h-4 w-4 text-slate-600" />
                 <div className="node-map-view__legend-items">

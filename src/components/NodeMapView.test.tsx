@@ -183,6 +183,7 @@ describe("NodeMapView", () => {
     expect(mapSurface).toBeInTheDocument();
     expect(legend).toBeInTheDocument();
     expect(mapSurface?.querySelector(".node-map-view__legend")).toBeInTheDocument();
+    expect(legend).toHaveClass("node-map-view__legend--inset");
     expect(container.querySelector(".node-map-view__map-panel")).not.toBeInTheDocument();
     expect(within(detailCard as HTMLElement).getAllByText("United States")).toHaveLength(1);
     expect(screen.getByText("全球分布")).toBeInTheDocument();
