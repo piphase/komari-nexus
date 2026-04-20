@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { geoGraticule10, geoNaturalEarth1, geoPath } from "d3-geo";
-import { Globe2, MapPinned } from "lucide-react";
+import { MapPinned } from "lucide-react";
 import { feature } from "topojson-client";
 import { useTranslation } from "react-i18next";
 
@@ -25,8 +25,8 @@ interface NodeMapViewProps {
 const SVG_WIDTH = 1000;
 const SVG_HEIGHT = 560;
 const MAP_HORIZONTAL_PADDING = 28;
-const MAP_TOP_PADDING = 34;
-const MAP_BOTTOM_INSET = 56;
+const MAP_TOP_PADDING = 42;
+const MAP_BOTTOM_INSET = 42;
 
 function getStatusText(status: "online" | "offline" | "partial") {
   switch (status) {
@@ -37,6 +37,11 @@ function getStatusText(status: "online" | "offline" | "partial") {
     default:
       return "部分在线";
   }
+}
+
+function getUnmappedRegionLabel(region: string) {
+  const normalizedRegion = region.trim();
+  return normalizedRegion || "未填写";
 }
 
 export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewProps) {
@@ -105,7 +110,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
     };
   }, [activeRegionsByMapName]);
 
-  if (!summary.regions.length) {
+  if (!summary.totalNodes) {
     return (
       <Card className="overflow-hidden rounded-[28px] border-slate-200/80 bg-card/95 shadow-sm">
         <CardHeader>
@@ -202,9 +207,8 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             </svg>
 
             <div className="node-map-view__legend node-map-view__legend--inset">
-              <div className="node-map-view__legend-card">
-                <Globe2 className="h-4 w-4 text-slate-600" />
-                <div className="node-map-view__legend-items">
+              <div className="node-map-view__legend-card node-map-view__legend-card--status">
+                <div className="node-map-view__legend-items node-map-view__legend-items--stacked">
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-online" />
                     全部在线
@@ -221,10 +225,26 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               </div>
 
               {summary.unmappedNodes.length > 0 && (
-                <div className="node-map-view__legend-card">
-                  <span className="text-xs font-medium text-slate-600">
-                    {`+${summary.unmappedNodes.length} 个未显示地区`}
-                  </span>
+                <div className="node-map-view__legend-card node-map-view__legend-card--stacked">
+                  <div className="node-map-view__legend-unmapped-header">
+                    <span className="text-xs font-semibold text-slate-700">未显示地区</span>
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-700"
+                    >
+                      {`共 ${summary.unmappedNodes.length} 个`}
+                    </Badge>
+                  </div>
+                  <div className="node-map-view__legend-unmapped-list">
+                    {summary.unmappedNodes.map((node) => (
+                      <div key={`${node.uuid}-unmapped`} className="node-map-view__legend-unmapped-item">
+                        <span className="node-map-view__legend-unmapped-region">
+                          {getUnmappedRegionLabel(node.region)}
+                        </span>
+                        <span className="node-map-view__legend-unmapped-node">{node.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -311,6 +331,19 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                       </button>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {!selectedRegion && (
+              <div className="node-map-view__detail-card node-map-view__detail-card--empty">
+                <div className="node-map-view__detail-empty">
+                  <h3 className="text-lg font-semibold tracking-tight text-slate-900">
+                    当前没有可显示的地区
+                  </h3>
+                  <p className="text-sm leading-6 text-slate-500">
+                    这些节点还在正常统计中，只是地区值暂时没有命中地图映射。先看左侧“未显示地区”列表，就能知道具体是哪一项需要补。
+                  </p>
                 </div>
               </div>
             )}

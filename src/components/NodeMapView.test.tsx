@@ -138,6 +138,63 @@ const compactRegionNodes = [
   },
 ] as const;
 
+const nodesWithUnmappedRegion = [
+  {
+    uuid: "mapped-us",
+    name: "Los Angeles Core",
+    region: "US",
+    os: "Debian",
+    arch: "x86_64",
+    cpu_name: "Demo CPU",
+    virtualization: "KVM",
+    cpu_cores: 4,
+    kernel_version: "6.1.0",
+    gpu_name: "",
+    mem_total: 1024,
+    swap_total: 0,
+    disk_total: 2048,
+    version: "",
+    weight: 1,
+    price: 0,
+    tags: "",
+    billing_cycle: 0,
+    currency: "",
+    group: "Core",
+    traffic_limit: 0,
+    traffic_limit_type: "sum",
+    expired_at: "",
+    ipv4: 0,
+    ipv6: 0,
+  },
+  {
+    uuid: "unknown-region",
+    name: "Mystery Relay",
+    region: "Mars Colony",
+    os: "Debian",
+    arch: "x86_64",
+    cpu_name: "Demo CPU",
+    virtualization: "KVM",
+    cpu_cores: 4,
+    kernel_version: "6.1.0",
+    gpu_name: "",
+    mem_total: 1024,
+    swap_total: 0,
+    disk_total: 2048,
+    version: "",
+    weight: 2,
+    price: 0,
+    tags: "",
+    billing_cycle: 0,
+    currency: "",
+    group: "Lab",
+    traffic_limit: 0,
+    traffic_limit_type: "sum",
+    expired_at: "",
+    ipv4: 0,
+    ipv6: 0,
+  },
+] as const;
+
 describe("NodeMapView", () => {
   it("renders active countries, hides UUIDs, and lets the user open node details from the sidebar", async () => {
     const user = userEvent.setup();
@@ -179,9 +236,14 @@ describe("NodeMapView", () => {
     const detailCard = container.querySelector(".node-map-view__detail-card");
     const mapSurface = container.querySelector(".node-map-view__surface");
     const legend = container.querySelector(".node-map-view__legend");
+    const statusLegendCard = container.querySelector(".node-map-view__legend-card--status");
+    const statusLegendItems = container.querySelector(".node-map-view__legend-items--stacked");
     expect(detailCard).toBeInTheDocument();
     expect(mapSurface).toBeInTheDocument();
     expect(legend).toBeInTheDocument();
+    expect(statusLegendCard).toBeInTheDocument();
+    expect(statusLegendItems).toBeInTheDocument();
+    expect(statusLegendCard?.querySelector("svg")).not.toBeInTheDocument();
     expect(mapSurface?.querySelector(".node-map-view__legend")).toBeInTheDocument();
     expect(legend).toHaveClass("node-map-view__legend--inset");
     expect(container.querySelector(".node-map-view__map-panel")).not.toBeInTheDocument();
@@ -214,5 +276,19 @@ describe("NodeMapView", () => {
 
     expect(screen.getByText("Singapore")).toBeInTheDocument();
     expect(screen.getByText("该地区共 1 台节点")).toBeInTheDocument();
+  });
+
+  it("shows unmapped region details so missing map coverage can be diagnosed quickly", () => {
+    render(
+      <NodeMapView
+        nodes={nodesWithUnmappedRegion}
+        liveData={{ online: ["mapped-us"], data: {} }}
+      />,
+    );
+
+    expect(screen.getByText("未显示地区")).toBeInTheDocument();
+    expect(screen.getByText("共 1 个")).toBeInTheDocument();
+    expect(screen.getByText("Mars Colony")).toBeInTheDocument();
+    expect(screen.getByText("Mystery Relay")).toBeInTheDocument();
   });
 });

@@ -12,29 +12,19 @@ type RegionMeta = {
   flagCode: string;
 };
 
-const regionCountryMetaByFlagCode: Record<string, RegionMeta> = {
-  US: { key: "US", label: "United States", mapName: "United States of America", flagCode: "US" },
-  CA: { key: "CA", label: "Canada", mapName: "Canada", flagCode: "CA" },
-  BR: { key: "BR", label: "Brazil", mapName: "Brazil", flagCode: "BR" },
-  GB: { key: "GB", label: "United Kingdom", mapName: "United Kingdom", flagCode: "GB" },
-  FR: { key: "FR", label: "France", mapName: "France", flagCode: "FR" },
-  DE: { key: "DE", label: "Germany", mapName: "Germany", flagCode: "DE" },
-  NL: { key: "NL", label: "Netherlands", mapName: "Netherlands", flagCode: "NL" },
-  ES: { key: "ES", label: "Spain", mapName: "Spain", flagCode: "ES" },
-  IT: { key: "IT", label: "Italy", mapName: "Italy", flagCode: "IT" },
-  TR: { key: "TR", label: "Turkey", mapName: "Turkey", flagCode: "TR" },
-  RU: { key: "RU", label: "Russia", mapName: "Russia", flagCode: "RU" },
-  IN: { key: "IN", label: "India", mapName: "India", flagCode: "IN" },
-  SG: { key: "SG", label: "Singapore", mapName: "Singapore", flagCode: "SG" },
-  HK: { key: "HK", label: "Hong Kong", mapName: "Hong Kong", flagCode: "HK" },
-  MO: { key: "MO", label: "Macau", mapName: "Macao", flagCode: "MO" },
-  CN: { key: "CN", label: "China", mapName: "China", flagCode: "CN" },
-  TW: { key: "TW", label: "Taiwan", mapName: "Taiwan", flagCode: "TW" },
-  JP: { key: "JP", label: "Japan", mapName: "Japan", flagCode: "JP" },
-  KR: { key: "KR", label: "South Korea", mapName: "South Korea", flagCode: "KR" },
-  AU: { key: "AU", label: "Australia", mapName: "Australia", flagCode: "AU" },
-  ZA: { key: "ZA", label: "South Africa", mapName: "South Africa", flagCode: "ZA" },
+const regionMetaOverridesByFlagCode: Record<
+  string,
+  Partial<Pick<RegionMeta, "label" | "mapName">>
+> = {
+  US: { label: "United States", mapName: "United States of America" },
+  MO: { label: "Macau", mapName: "Macao" },
+  HK: { label: "Hong Kong", mapName: "Hong Kong" },
 };
+
+const englishRegionDisplayNames =
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "region" })
+    : null;
 
 export interface MapRegionSummary {
   emoji: string;
@@ -69,11 +59,31 @@ function getRegionStatus(online: number, offline: number): RegionStatus {
   return "partial";
 }
 
+function resolveRegionMetaFromFlagCode(flagCode: string): RegionMeta | null {
+  if (flagCode === "UN") {
+    return null;
+  }
+
+  const displayName = englishRegionDisplayNames?.of(flagCode)?.trim();
+  if (!displayName) {
+    return null;
+  }
+
+  const overrides = regionMetaOverridesByFlagCode[flagCode];
+
+  return {
+    key: flagCode,
+    label: overrides?.label ?? displayName,
+    mapName: overrides?.mapName ?? displayName,
+    flagCode,
+  };
+}
+
 function resolveRegionMeta(region: string): RegionMeta | null {
   const flagCode = resolveFlagCode(region);
-  const predefined = regionCountryMetaByFlagCode[flagCode];
-  if (predefined) {
-    return predefined;
+  const standardizedMeta = resolveRegionMetaFromFlagCode(flagCode);
+  if (standardizedMeta) {
+    return standardizedMeta;
   }
 
   const regionInfo = emojiToRegionMap[region];
@@ -89,10 +99,7 @@ function resolveRegionMeta(region: string): RegionMeta | null {
   };
 }
 
-export function buildMapViewSummary(
-  nodes: NodeBasicInfo[],
-  liveData: LiveData
-): MapViewSummary {
+export function buildMapViewSummary(nodes: NodeBasicInfo[], liveData: LiveData): MapViewSummary {
   const onlineSet = new Set(liveData?.online ?? []);
   const regionMap = new Map<string, MapRegionSummary>();
   const unmappedNodes: NodeBasicInfo[] = [];

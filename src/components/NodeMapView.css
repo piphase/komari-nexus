@@ -99,7 +99,7 @@
   gap: 1rem;
   flex-wrap: wrap;
   align-self: end;
-  padding: 0 1rem 0.58rem;
+  padding: 0 1.1rem 1rem;
   pointer-events: none;
 }
 
@@ -123,10 +123,71 @@
   pointer-events: auto;
 }
 
+.node-map-view__legend-card--status {
+  align-items: flex-start;
+  padding: 0.82rem 0.9rem;
+}
+
+.node-map-view__legend-card--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  width: min(100%, 360px);
+}
+
+.node-map-view__legend-unmapped-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.node-map-view__legend-unmapped-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.node-map-view__legend-unmapped-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 0.85rem;
+  background: rgba(248, 250, 252, 0.92);
+  padding: 0.55rem 0.7rem;
+}
+
+.node-map-view__legend-unmapped-region {
+  min-width: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgb(51, 65, 85);
+  overflow-wrap: anywhere;
+}
+
+.node-map-view__legend-unmapped-node {
+  min-width: 0;
+  max-width: 48%;
+  flex: none;
+  text-align: right;
+  font-size: 0.72rem;
+  color: rgb(100, 116, 139);
+  overflow-wrap: anywhere;
+}
+
 .node-map-view__legend-items {
   display: flex;
   gap: 0.85rem;
   flex-wrap: wrap;
+}
+
+.node-map-view__legend-items--stacked {
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
 }
 
 .node-map-view__legend-item {
@@ -171,6 +232,16 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.9));
   box-shadow: 0 18px 36px rgba(148, 163, 184, 0.12);
   overflow: hidden;
+}
+
+.node-map-view__detail-card--empty {
+  justify-content: center;
+}
+
+.node-map-view__detail-empty {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.6rem;
 }
 
 @media (min-width: 1024px) {
@@ -263,6 +334,18 @@
   .node-map-view__legend-card {
     width: 100%;
     justify-content: center;
+  }
+
+  .node-map-view__legend-card--status {
+    align-items: center;
+  }
+
+  .node-map-view__legend-card--stacked {
+    justify-content: flex-start;
+  }
+
+  .node-map-view__legend-items--stacked {
+    align-items: flex-start;
   }
 
   .node-map-view__detail-header {
