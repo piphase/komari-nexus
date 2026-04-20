@@ -19,6 +19,7 @@ export type RemainingValueNode = {
   currencyCode: string;
   expiresAt: string | null;
   remainingMs: number | null;
+  isLongTerm: boolean;
   remainingRatio: number;
   remainingValueOriginal: number;
   status: RemainingValueNodeStatus;
@@ -48,6 +49,8 @@ const SYMBOL_TO_ISO: Record<string, string> = {
   "\u0e3f": "THB",
 };
 
+const LONG_TERM_THRESHOLD_MS = 36500 * 24 * 60 * 60 * 1000;
+
 function createSkippedNode(node: NodeBasicInfo, skipReason: SkipReason): SkippedRemainingValueNode {
   return {
     uuid: node.uuid,
@@ -62,6 +65,7 @@ function createRemainingValueNode(
   status: RemainingValueNodeStatus,
   remainingRatio: number,
   remainingMs: number | null,
+  isLongTerm: boolean,
   remainingValueOriginal: number,
 ): RemainingValueNode {
   return {
@@ -73,6 +77,7 @@ function createRemainingValueNode(
     currencyCode,
     expiresAt: node.expired_at.trim() ? node.expired_at : null,
     remainingMs,
+    isLongTerm,
     remainingRatio,
     remainingValueOriginal,
     status,
@@ -111,7 +116,7 @@ function toRemainingValueNode(
   }
 
   if (node.billing_cycle === -1) {
-    return createRemainingValueNode(node, currencyCode, "active", 1, null, node.price);
+    return createRemainingValueNode(node, currencyCode, "active", 1, null, false, node.price);
   }
 
   if (node.billing_cycle <= 0) {
@@ -131,10 +136,11 @@ function toRemainingValueNode(
   const remainingMs = expiresAtMs - nowMs;
 
   if (remainingMs <= 0) {
-    return createRemainingValueNode(node, currencyCode, "expired", 0, 0, 0);
+    return createRemainingValueNode(node, currencyCode, "expired", 0, 0, false, 0);
   }
 
-  const remainingRatio = Math.max(0, Math.min(remainingMs / cycleMs, 1));
+  const isLongTerm = remainingMs > LONG_TERM_THRESHOLD_MS;
+  const remainingRatio = isLongTerm ? 1 : Math.max(0, remainingMs / cycleMs);
 
   return createRemainingValueNode(
     node,
@@ -142,6 +148,7 @@ function toRemainingValueNode(
     "active",
     remainingRatio,
     remainingMs,
+    isLongTerm,
     node.price * remainingRatio,
   );
 }

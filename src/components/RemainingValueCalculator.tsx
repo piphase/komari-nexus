@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Calculator, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -37,7 +37,7 @@ type DetailFilter = "all" | "active" | "skipped" | "expired";
 
 function formatConvertedAmount(code: string, value: number | null) {
   if (value === null) {
-    return "暂未换算";
+    return "鏆傛湭鎹㈢畻";
   }
 
   return `${code} ${value.toFixed(2)}`;
@@ -51,7 +51,10 @@ function formatBillingCycle(billingCycle: number) {
   return billingCycle === -1 ? "一次性" : `${billingCycle} 天`;
 }
 
-function formatRemainingTime(remainingMs: number | null) {
+function formatRemainingTime(remainingMs: number | null, isLongTerm: boolean) {
+  if (isLongTerm) {
+    return "长期";
+  }
   if (remainingMs === null) {
     return "一次性";
   }
@@ -102,7 +105,7 @@ function ActiveNodeCard({
         {item.price} / {formatBillingCycle(item.billingCycle)}
       </div>
       <div className="mt-1 text-sm text-muted-foreground">
-        剩余时间 {formatRemainingTime(item.remainingMs)}
+        剩余时间 {formatRemainingTime(item.remainingMs, item.isLongTerm)}
       </div>
       <div className="mt-1 text-sm text-muted-foreground">
         原币种价值 {formatOriginalAmount(item.currencyCode, item.remainingValueOriginal)}
@@ -470,3 +473,4 @@ export default function RemainingValueCalculator() {
     </>
   );
 }
+

@@ -70,6 +70,22 @@ describe("remainingValue", () => {
           currency: "\u00a5",
         }),
         createNode({
+          uuid: "prepaid-quarter",
+          name: "Quarterly Prepaid",
+          price: 12,
+          billing_cycle: 30,
+          currency: "$",
+          expired_at: "2026-07-18T12:00:00.000Z",
+        }),
+        createNode({
+          uuid: "long-term-node",
+          name: "Long Term Node",
+          price: 18,
+          billing_cycle: 30,
+          currency: "$",
+          expired_at: "2200-04-19T12:00:00.000Z",
+        }),
+        createNode({
           uuid: "expired-node",
           name: "Expired VM",
           price: 15,
@@ -97,7 +113,7 @@ describe("remainingValue", () => {
       new Date("2026-04-19T12:00:00.000Z"),
     );
 
-    expect(snapshot.active).toHaveLength(2);
+    expect(snapshot.active).toHaveLength(4);
     expect(snapshot.expired).toHaveLength(1);
     expect(snapshot.skipped).toHaveLength(2);
 
@@ -115,6 +131,24 @@ describe("remainingValue", () => {
       remainingValueOriginal: 88,
       remainingMs: null,
       remainingRatio: 1,
+    });
+
+    const prepaidNode = snapshot.active.find((item) => item.uuid === "prepaid-quarter");
+    expect(prepaidNode).toMatchObject({
+      currencyCode: "USD",
+      status: "active",
+      remainingRatio: 3,
+      remainingValueOriginal: 36,
+      isLongTerm: false,
+    });
+
+    const longTermNode = snapshot.active.find((item) => item.uuid === "long-term-node");
+    expect(longTermNode).toMatchObject({
+      currencyCode: "USD",
+      status: "active",
+      remainingRatio: 1,
+      remainingValueOriginal: 18,
+      isLongTerm: true,
     });
 
     expect(snapshot.expired[0]).toMatchObject({
