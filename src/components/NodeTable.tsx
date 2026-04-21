@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Flex } from "@/components/ui/flex";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
@@ -25,6 +26,7 @@ import { DetailsGrid } from "./DetailsGrid";
 import MiniPingChart from "./MiniPingChart";
 import { getOSImage } from "@/utils";
 import { cn } from "@/lib/utils";
+import { useProgressiveRender } from "@/hooks/useProgressiveRender";
 
 interface NodeTableProps {
   nodes: NodeBasicInfo[];
@@ -79,6 +81,7 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
   };
 
   const onlineNodes = liveData && liveData.online ? liveData.online : [];
+  const onlineNodeSet = useMemo(() => new Set(onlineNodes), [onlineNodes]);
 
   const getNodeData = (uuid: string): Record => {
     const defaultLive = {
@@ -94,63 +97,84 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
       : defaultLive;
   };
 
-  const sortedNodes = [...nodes].sort((a, b) => {
-    const aOnline = onlineNodes.includes(a.uuid);
-    const bOnline = onlineNodes.includes(b.uuid);
-    const aData = getNodeData(a.uuid);
-    const bData = getNodeData(b.uuid);
+  const sortedNodes = useMemo(() => {
+    return [...nodes].sort((a, b) => {
+      const aOnline = onlineNodeSet.has(a.uuid);
+      const bOnline = onlineNodeSet.has(b.uuid);
+      const aData = getNodeData(a.uuid);
+      const bData = getNodeData(b.uuid);
 
-    if (!sortState.field || sortState.order === 'default') {
-      if (aOnline !== bOnline) {
-        return aOnline ? -1 : 1;
+      if (!sortState.field || sortState.order === 'default') {
+        if (aOnline !== bOnline) {
+          return aOnline ? -1 : 1;
+        }
+        return a.weight - b.weight;
       }
-      return a.weight - b.weight;
-    }
 
-    let comparison = 0;
-    switch (sortState.field) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name);
-        break;
-      case 'os':
-        comparison = a.os.localeCompare(b.os);
-        break;
-      case 'status':
-        comparison = Number(bOnline) - Number(aOnline);
-        break;
-      case 'cpu':
-        comparison = aData.cpu.usage - bData.cpu.usage;
-        break;
-      case 'ram':
-        const aRamPercent = a.mem_total ? (aData.ram.used / a.mem_total) * 100 : 0;
-        const bRamPercent = b.mem_total ? (bData.ram.used / b.mem_total) * 100 : 0;
-        comparison = aRamPercent - bRamPercent;
-        break;
-      case 'disk':
-        const aDiskPercent = a.disk_total ? (aData.disk.used / a.disk_total) * 100 : 0;
-        const bDiskPercent = b.disk_total ? (bData.disk.used / b.disk_total) * 100 : 0;
-        comparison = aDiskPercent - bDiskPercent;
-        break;
-      case 'price':
-        comparison = a.price - b.price;
-        break;
-      case 'networkUp':
-        comparison = aData.network.up - bData.network.up;
-        break;
-      case 'networkDown':
-        comparison = aData.network.down - bData.network.down;
-        break;
-      case 'totalUp':
-        comparison = aData.network.totalUp - bData.network.totalUp;
-        break;
-      case 'totalDown':
-        comparison = aData.network.totalDown - bData.network.totalDown;
-        break;
-      default:
-        comparison = 0;
-    }
+      let comparison = 0;
+      switch (sortState.field) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'os':
+          comparison = a.os.localeCompare(b.os);
+          break;
+        case 'status':
+          comparison = Number(bOnline) - Number(aOnline);
+          break;
+        case 'cpu':
+          comparison = aData.cpu.usage - bData.cpu.usage;
+          break;
+        case 'ram': {
+          const aRamPercent = a.mem_total ? (aData.ram.used / a.mem_total) * 100 : 0;
+          const bRamPercent = b.mem_total ? (bData.ram.used / b.mem_total) * 100 : 0;
+          comparison = aRamPercent - bRamPercent;
+          break;
+        }
+        case 'disk': {
+          const aDiskPercent = a.disk_total ? (aData.disk.used / a.disk_total) * 100 : 0;
+          const bDiskPercent = b.disk_total ? (bData.disk.used / b.disk_total) * 100 : 0;
+          comparison = aDiskPercent - bDiskPercent;
+          break;
+        }
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        case 'networkUp':
+          comparison = aData.network.up - bData.network.up;
+          break;
+        case 'networkDown':
+          comparison = aData.network.down - bData.network.down;
+          break;
+        case 'totalUp':
+          comparison = aData.network.totalUp - bData.network.totalUp;
+          break;
+        case 'totalDown':
+          comparison = aData.network.totalDown - bData.network.totalDown;
+          break;
+        default:
+          comparison = 0;
+      }
 
-    return sortState.order === 'desc' ? -comparison : comparison;
+      return sortState.order === 'desc' ? -comparison : comparison;
+    });
+  }, [liveData, nodes, onlineNodeSet, sortState]);
+
+  const progressiveResetKey = useMemo(
+    () =>
+      `table:${sortState.field ?? "default"}:${sortState.order}:${nodes
+        .map((node) => node.uuid)
+        .join("|")}`,
+    [nodes, sortState.field, sortState.order],
+  );
+
+  const { visibleItems, remainingCount } = useProgressiveRender(sortedNodes, {
+    enabled: true,
+    initialCount: 10,
+    batchSize: 10,
+    batchDelayMs: 32,
+    revealAllOnInteraction: false,
+    resetKey: progressiveResetKey,
   });
 
   const showPriceColumn = nodes.some(node => node.price !== 0);
@@ -258,8 +282,8 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
             </TableRow>
           </TableHeader>
         <TableBody>
-          {sortedNodes.map((node) => {
-            const isOnline = onlineNodes.includes(node.uuid);
+          {visibleItems.map((node) => {
+            const isOnline = onlineNodeSet.has(node.uuid);
             const nodeData = getNodeData(node.uuid);
             const isExpanded = expandedRows.has(node.uuid);
 
@@ -416,6 +440,35 @@ const NodeTable: React.FC<NodeTableProps> = ({ nodes, liveData }) => {
               </React.Fragment>
             );
           })}
+          {remainingCount > 0 &&
+            Array.from({ length: Math.min(10, remainingCount) }, (_, index) => (
+              <TableRow key={`node-table-skeleton-${index}`} className="hover:bg-transparent">
+                <TableCell className="py-3 px-2">
+                  <Skeleton className="h-6 w-6 rounded-md" />
+                </TableCell>
+                <TableCell className="py-3 px-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-5 w-5 rounded-md" /></TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-6 w-20 rounded-full" /></TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-[76px] w-[76px] rounded-full" /></TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-[76px] w-[76px] rounded-full" /></TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-[76px] w-[76px] rounded-full" /></TableCell>
+                {showPriceColumn && (
+                  <TableCell className="py-3 px-2">
+                    <Skeleton className="mx-auto h-6 w-24 rounded-full" />
+                  </TableCell>
+                )}
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-4 w-24" /></TableCell>
+                <TableCell className="py-3 px-2"><Skeleton className="mx-auto h-4 w-24" /></TableCell>
+              </TableRow>
+            ))}
         </TableBody>
         </Table>
       </div>

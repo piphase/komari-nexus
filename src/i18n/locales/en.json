@@ -352,7 +352,31 @@
     "title": "Global Distribution",
     "servers": "{{count}} servers",
     "online": "{{count}} online",
-    "offline": "{{count}} offline"
+    "offline": "{{count}} offline",
+    "activeCountries": "{{count}} active countries / regions",
+    "ariaLabel": "Global node distribution map",
+    "countrySummary": "{{name}}: {{total}} nodes, {{online}} online, {{offline}} offline",
+    "legend": {
+      "online": "Fully online",
+      "partial": "Partially online",
+      "offline": "Fully offline"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "partial": "Partially online"
+    },
+    "unmappedRegions": "Unmapped Regions",
+    "unmappedCount": "Total {{count}} items",
+    "regionNodes": "{{count}} nodes in this region",
+    "stats": {
+      "nodes": "Nodes"
+    },
+    "unclassified": "Unclassified",
+    "viewDetails": "View details for {{name}}",
+    "emptySelectionTitle": "No regions can be displayed right now",
+    "emptySelectionDescription": "These nodes are still counted normally, but their region values do not yet match the map mapping.",
+    "regionUnknown": "Not set"
   },
   "network_speed": "Network Speed",
   "nodeCard": {
@@ -721,5 +745,74 @@
     "mode": "View Mode"
   },
   "warn_https": "The current connection is not HTTPS! Your sensitive data is at serious risk. Take immediate action to secure the connection! Copy may not available!",
-  "warn_websocket": "RPC2 request failed, please check the network connection or server status!"
+  "warn_websocket": "RPC2 request failed, please check the network connection or server status!",
+  "nodeDisplay": {
+    "grid": "Cards",
+    "table": "List",
+    "remainingValueCalculator": "Remaining Value Calculator"
+  },
+  "remainingValue": {
+    "title": "Remaining Value Calculator",
+    "description": "Check node remaining value and exchange-rate conversions.",
+    "total": "Total Remaining Value",
+    "placeholderPending": "Pending conversion",
+    "refreshRates": "Refresh Rates",
+    "rateProvider": "Online exchange rates are powered by Frankfurter and are only requested after you open the calculator.",
+    "errorRatesUnavailable": "Unable to fetch exchange rates right now",
+    "billingCycle": {
+      "once": "One-time",
+      "days": "{{count}} days"
+    },
+    "remainingTime": {
+      "longTerm": "Long term",
+      "oneTime": "One-time",
+      "value": "{{days}} days {{hours}} hours"
+    },
+    "skipReason": {
+      "missing_price": "Price not set",
+      "missing_currency": "Currency not set",
+      "unsupported_currency": "Currency not supported yet",
+      "missing_expired_at": "Expiration time not set",
+      "invalid_expired_at": "Expiration time format is invalid",
+      "unsupported_billing_cycle": "Billing cycle not set",
+      "default": "Incomplete information"
+    },
+    "card": {
+      "originalPrice": "Original price {{amount}} / {{cycle}}",
+      "remainingTime": "Remaining time {{value}}",
+      "originalValue": "Original currency value {{amount}}",
+      "skipReason": "Skipped because",
+      "expiredValue": "Remaining value 0"
+    },
+    "filter": {
+      "all": "All {{count}}",
+      "active": "Included {{count}}",
+      "skipped": "Skipped {{count}}",
+      "expired": "Expired {{count}}"
+    },
+    "section": {
+      "active": "Included Nodes",
+      "skipped": "Skipped Nodes",
+      "expired": "Expired Nodes"
+    },
+    "empty": {
+      "none": "There are no nodes to display right now",
+      "active": "There are no included nodes right now",
+      "skipped": "There are no skipped nodes right now",
+      "expired": "There are no expired nodes right now"
+    },
+    "rateStatus": {
+      "loading": "Waiting for exchange rates",
+      "stale": "Exchange rates are not the latest",
+      "updatedAt": "Exchange rates updated at {{value}}"
+    }
+  },
+  "visitorInfo": {
+    "unavailable": "Unavailable",
+    "title": "Visitor Info",
+    "latency": "Latency",
+    "ip": "IP Address",
+    "location": "Location",
+    "reopen": "Reopen visitor info"
+  }
 }

@@ -7,6 +7,36 @@ import { NodeMapView } from "@/components/NodeMapView";
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        "mapView.title": "Global Distribution",
+        "mapView.activeCountries": "{{count}} active countries / regions",
+        "mapView.servers": "{{count}} servers",
+        "mapView.online": "{{count}} online",
+        "mapView.offline": "{{count}} offline",
+        "nodeCard.online": "Online",
+        "nodeCard.offline": "Offline",
+        "mapView.legend.online": "Fully online",
+        "mapView.legend.partial": "Partially online",
+        "mapView.legend.offline": "Fully offline",
+        "mapView.unmappedRegions": "Unmapped Regions",
+        "mapView.unmappedCount": "Total {{count}} items",
+        "mapView.regionNodes": "{{count}} nodes in this region",
+        "mapView.stats.nodes": "Nodes",
+        "mapView.unclassified": "Unclassified",
+        "mapView.viewDetails": "View details for {{name}}",
+        "mapView.emptySelectionTitle": "No regions can be displayed right now",
+        "mapView.emptySelectionDescription":
+          "These nodes are still counted normally, but their region values do not yet match the map mapping.",
+      };
+
+      const template = translations[key];
+      if (template) {
+        return Object.entries(options ?? {}).reduce(
+          (result, [name, value]) => result.replaceAll(`{{${name}}}`, String(value)),
+          template,
+        );
+      }
+
       if (typeof options?.defaultValue === "string") {
         return options.defaultValue;
       }
@@ -23,7 +53,7 @@ const demoNodes = [
   {
     uuid: "us-core",
     name: "Virginia Core",
-    region: "🇺🇸",
+    region: "US",
     os: "Debian",
     arch: "x86_64",
     cpu_name: "Demo CPU",
@@ -50,7 +80,7 @@ const demoNodes = [
   {
     uuid: "us-edge",
     name: "Dallas Edge",
-    region: "🇺🇸",
+    region: "US",
     os: "Debian",
     arch: "x86_64",
     cpu_name: "Demo CPU",
@@ -77,7 +107,7 @@ const demoNodes = [
   {
     uuid: "jp-edge",
     name: "Tokyo Edge",
-    region: "🇯🇵",
+    region: "JP",
     os: "Debian",
     arch: "x86_64",
     cpu_name: "Demo CPU",
@@ -112,7 +142,7 @@ const compactRegionNodes = [
   {
     uuid: "sg-core",
     name: "Singapore Core",
-    region: "🇸🇬",
+    region: "SG",
     os: "Debian",
     arch: "x86_64",
     cpu_name: "Demo CPU",
@@ -211,12 +241,12 @@ describe("NodeMapView", () => {
     expect(container.querySelector('[data-country-code="US"]')).toBeInTheDocument();
     expect(screen.getByTestId(/flag-/)).toBeInTheDocument();
 
-    expect(screen.getAllByText("3 台节点")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("2 台在线")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("1 台离线")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("3 servers")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("2 online")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("1 offline")[0]).toBeInTheDocument();
     expect(screen.getAllByText("United States")[0]).toBeInTheDocument();
     expect(screen.queryByText("us-core")).not.toBeInTheDocument();
-    expect(screen.getByText("暂未分类")).toBeInTheDocument();
+    expect(screen.getByText("Unclassified")).toBeInTheDocument();
 
     const japanCountry = container.querySelector('[data-country-code="JP"]');
     expect(japanCountry).toBeInTheDocument();
@@ -230,7 +260,7 @@ describe("NodeMapView", () => {
     expect(handleOpenNodeDetails).toHaveBeenCalledWith("jp-edge");
   });
 
-  it("shows a single country title in the detail header and keeps nodes inside a dedicated scroll area", () => {
+  it("shows translated legend and region detail copy inside the dedicated scroll area", () => {
     const { container } = render(<NodeMapView nodes={demoNodes} liveData={demoLiveData} />);
 
     const detailCard = container.querySelector(".node-map-view__detail-card");
@@ -249,15 +279,15 @@ describe("NodeMapView", () => {
     expect(legend).toHaveClass("node-map-view__legend--inset");
     expect(container.querySelector(".node-map-view__map-panel")).not.toBeInTheDocument();
     expect(within(detailCard as HTMLElement).getAllByText("United States")).toHaveLength(1);
-    expect(screen.getByText("全球分布")).toBeInTheDocument();
-    expect(screen.getByText("2 个活跃国家/地区")).toBeInTheDocument();
-    expect(screen.getByText("全部在线")).toBeInTheDocument();
-    expect(screen.getAllByText("部分在线")[0]).toBeInTheDocument();
-    expect(screen.getByText("全部离线")).toBeInTheDocument();
-    expect(screen.getByText("该地区共 2 台节点")).toBeInTheDocument();
-    expect(screen.getByText("节点数")).toBeInTheDocument();
-    expect(screen.getAllByText("在线")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("离线")[0]).toBeInTheDocument();
+    expect(screen.getByText("Global Distribution")).toBeInTheDocument();
+    expect(screen.getByText("2 active countries / regions")).toBeInTheDocument();
+    expect(screen.getByText("Fully online")).toBeInTheDocument();
+    expect(screen.getAllByText("Partially online")[0]).toBeInTheDocument();
+    expect(screen.getByText("Fully offline")).toBeInTheDocument();
+    expect(screen.getByText("2 nodes in this region")).toBeInTheDocument();
+    expect(screen.getByText("Nodes")).toBeInTheDocument();
+    expect(screen.getAllByText("Online")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Offline")[0]).toBeInTheDocument();
     expect(container.querySelector(".node-map-view__node-list")).toBeInTheDocument();
   });
 
@@ -291,10 +321,10 @@ describe("NodeMapView", () => {
     await user.click(singaporeCountry as Element);
 
     expect(screen.getByText("Singapore")).toBeInTheDocument();
-    expect(screen.getByText("该地区共 1 台节点")).toBeInTheDocument();
+    expect(screen.getByText("1 nodes in this region")).toBeInTheDocument();
   });
 
-  it("shows unmapped region details so missing map coverage can be diagnosed quickly", () => {
+  it("shows translated unmapped region details so missing map coverage can be diagnosed quickly", () => {
     render(
       <NodeMapView
         nodes={nodesWithUnmappedRegion}
@@ -302,8 +332,8 @@ describe("NodeMapView", () => {
       />,
     );
 
-    expect(screen.getByText("未显示地区")).toBeInTheDocument();
-    expect(screen.getByText("共 1 项")).toBeInTheDocument();
+    expect(screen.getByText("Unmapped Regions")).toBeInTheDocument();
+    expect(screen.getByText("Total 1 items")).toBeInTheDocument();
     expect(screen.getByText("Mars Colony")).toBeInTheDocument();
     expect(screen.getByText("Mystery Relay")).toBeInTheDocument();
   });

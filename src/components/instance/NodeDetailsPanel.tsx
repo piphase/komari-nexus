@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import {
   Drawer,
   DrawerContent,
@@ -14,7 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-import { NodeDetailsContent } from "./NodeDetailsContent";
+const NodeDetailsContent = dynamic(
+  () => import("./NodeDetailsContent").then((mod) => mod.NodeDetailsContent),
+  {
+    ssr: false,
+  },
+);
 
 interface NodeDetailsPanelProps {
   open: boolean;
@@ -35,7 +42,7 @@ export function NodeDetailsPanel({
 
   const content = (
     <div className="max-h-[85vh] overflow-y-auto">
-      <NodeDetailsContent uuid={uuid} />
+      {open ? <NodeDetailsContent uuid={uuid} /> : null}
     </div>
   );
 

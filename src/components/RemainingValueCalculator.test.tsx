@@ -9,8 +9,52 @@ let mounted = true;
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => {
-    const translate = (key: string, options?: Record<string, unknown>) =>
-      typeof options?.defaultValue === "string" ? options.defaultValue : key;
+    const translations: Record<string, string> = {
+      "remainingValue.title": "Remaining Value Calculator",
+      "remainingValue.description": "Check node remaining value and exchange-rate conversions.",
+      "remainingValue.total": "Total Remaining Value",
+      "remainingValue.rateStatus.loading": "Waiting for exchange rates",
+      "remainingValue.rateStatus.updatedAt": "Exchange rates updated at {{value}}",
+      "remainingValue.rateStatus.stale": "Exchange rates are not the latest",
+      "remainingValue.refreshRates": "Refresh Rates",
+      "remainingValue.rateProvider":
+        "Online exchange rates are powered by Frankfurter and are only requested after you open the calculator.",
+      "remainingValue.filter.all": "All {{count}}",
+      "remainingValue.filter.active": "Included {{count}}",
+      "remainingValue.filter.skipped": "Skipped {{count}}",
+      "remainingValue.filter.expired": "Expired {{count}}",
+      "remainingValue.placeholderPending": "Pending conversion",
+      "remainingValue.billingCycle.once": "One-time",
+      "remainingValue.billingCycle.days": "{{count}} days",
+      "remainingValue.remainingTime.longTerm": "Long term",
+      "remainingValue.remainingTime.oneTime": "One-time",
+      "remainingValue.remainingTime.value": "{{days}} days {{hours}} hours",
+      "remainingValue.section.active": "Included Nodes",
+      "remainingValue.section.skipped": "Skipped Nodes",
+      "remainingValue.section.expired": "Expired Nodes",
+      "remainingValue.card.originalPrice": "Original price {{amount}} / {{cycle}}",
+      "remainingValue.card.remainingTime": "Remaining time {{value}}",
+      "remainingValue.card.originalValue": "Original currency value {{amount}}",
+      "remainingValue.card.skipReason": "Skipped because",
+      "remainingValue.card.expiredValue": "Remaining value 0",
+      "remainingValue.skipReason.missing_price": "Price not set",
+      "remainingValue.empty.none": "There are no nodes to display right now",
+      "remainingValue.empty.active": "There are no included nodes right now",
+      "remainingValue.empty.skipped": "There are no skipped nodes right now",
+      "remainingValue.empty.expired": "There are no expired nodes right now",
+    };
+
+    const translate = (key: string, options?: Record<string, unknown>) => {
+      const template = translations[key];
+      if (template) {
+        return Object.entries(options ?? {}).reduce(
+          (result, [name, value]) => result.replaceAll(`{{${name}}}`, String(value)),
+          template,
+        );
+      }
+
+      return typeof options?.defaultValue === "string" ? options.defaultValue : key;
+    };
 
     return {
       t: translate,
@@ -189,10 +233,10 @@ describe("RemainingValueCalculator", () => {
 
     translationReady = true;
     rerender(<RemainingValueCalculator />);
-    expect(screen.getByRole("button", { name: "剩余价值计算器" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remaining Value Calculator" })).toBeInTheDocument();
   });
 
-  it("opens from the floating button and uses content-width tab groups plus a refresh button", async () => {
+  it("opens from the floating button and shows translated controls", async () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn().mockResolvedValue(mockRatesResponse) as unknown as typeof fetch;
@@ -201,7 +245,7 @@ describe("RemainingValueCalculator", () => {
 
     expect(screen.queryByTestId("remaining-value-panel")).not.toBeInTheDocument();
 
-    const floatingButton = screen.getByRole("button", { name: "剩余价值计算器" });
+    const floatingButton = screen.getByRole("button", { name: "Remaining Value Calculator" });
     expect(floatingButton).toHaveClass("bg-card/95");
     expect(floatingButton).toHaveClass("ring-1");
     expect(floatingButton).toHaveClass("dark:ring-white/12");
@@ -217,8 +261,10 @@ describe("RemainingValueCalculator", () => {
     expect(screen.getByRole("tab", { name: "CNY" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "USD" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "EUR" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /刷新/ })).toBeInTheDocument();
-    expect(screen.getByTestId("remaining-value-rate-provider")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /refresh rates/i })).toBeInTheDocument();
+    expect(screen.getByTestId("remaining-value-rate-provider")).toHaveTextContent(
+      "Online exchange rates are powered by Frankfurter",
+    );
 
     const [currencyTabList, filterTabList] = screen.getAllByRole("tablist");
     expect(currencyTabList).toHaveClass("w-fit");
@@ -234,12 +280,38 @@ describe("RemainingValueCalculator", () => {
 
     render(<RemainingValueCalculator />);
 
-    await user.click(screen.getByRole("button", { name: "剩余价值计算器" }));
+    await user.click(screen.getByRole("button", { name: "Remaining Value Calculator" }));
     expect(await screen.findByText("CNY 152.00")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "USD" }));
 
     expect(await screen.findByText("USD 23.75")).toBeInTheDocument();
+  });
+
+  it("shows a readable translated placeholder before exchange rates finish loading", async () => {
+    const user = userEvent.setup();
+
+    let resolveFetch: ((value: Response) => void) | null = null;
+    global.fetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    ) as unknown as typeof fetch;
+
+    render(<RemainingValueCalculator />);
+
+    await user.click(screen.getByRole("button", { name: "Remaining Value Calculator" }));
+
+    expect(await screen.findByTestId("remaining-value-panel")).toBeInTheDocument();
+    expect(screen.getAllByText("Pending conversion").length).toBeGreaterThan(0);
+    expect(screen.queryByText("閺嗗倹婀幑銏㈢暬")).not.toBeInTheDocument();
+
+    resolveFetch?.(mockRatesResponse);
+
+    await waitFor(() => {
+      expect(screen.getByText("CNY 152.00")).toBeInTheDocument();
+    });
   });
 
   it("filters between all, active, skipped and expired nodes", async () => {
@@ -249,19 +321,27 @@ describe("RemainingValueCalculator", () => {
 
     render(<RemainingValueCalculator />);
 
-    await user.click(screen.getByRole("button", { name: "剩余价值计算器" }));
+    await user.click(screen.getByRole("button", { name: "Remaining Value Calculator" }));
     expect(await screen.findByTestId("remaining-value-panel")).toBeInTheDocument();
+
+    expect(screen.getByRole("tab", { name: "All 4" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Included 2" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Skipped 1" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Expired 1" })).toBeInTheDocument();
 
     const [, filterTabList] = screen.getAllByRole("tablist");
     const filterTabs = within(filterTabList).getAllByRole("tab");
 
     await user.click(filterTabs[2]);
     expect(screen.getByText("Missing Price")).toBeInTheDocument();
+    expect(screen.getByText("Skipped because")).toBeInTheDocument();
+    expect(screen.getByText("Price not set")).toBeInTheDocument();
     expect(screen.queryByText("US VPS")).not.toBeInTheDocument();
     expect(screen.queryByText("Expired VM")).not.toBeInTheDocument();
 
     await user.click(filterTabs[3]);
     expect(screen.getByText("Expired VM")).toBeInTheDocument();
+    expect(screen.getByText("Remaining value 0")).toBeInTheDocument();
     expect(screen.queryByText("Missing Price")).not.toBeInTheDocument();
     expect(screen.queryByText("US VPS")).not.toBeInTheDocument();
 
@@ -271,17 +351,17 @@ describe("RemainingValueCalculator", () => {
     expect(screen.queryByText("Missing Price")).not.toBeInTheDocument();
   });
 
-  it("shows long-term nodes as 长期 while still estimating them with a single cycle price", async () => {
+  it("shows long-term nodes as translated long term while still estimating them with a single cycle price", async () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn().mockResolvedValue(mockRatesResponse) as unknown as typeof fetch;
 
     render(<RemainingValueCalculator />);
 
-    await user.click(screen.getByRole("button", { name: "剩余价值计算器" }));
+    await user.click(screen.getByRole("button", { name: "Remaining Value Calculator" }));
 
     expect(await screen.findByText("US VPS")).toBeInTheDocument();
-    expect(screen.getByText(/长期/)).toBeInTheDocument();
+    expect(screen.getByText(/Long term/)).toBeInTheDocument();
     expect(screen.getByText(/USD 10\.00/)).toBeInTheDocument();
   });
 
@@ -314,7 +394,7 @@ describe("RemainingValueCalculator", () => {
 
     render(<RemainingValueCalculator />);
 
-    await user.click(screen.getByRole("button", { name: "剩余价值计算器" }));
+    await user.click(screen.getByRole("button", { name: "Remaining Value Calculator" }));
 
     await waitFor(() => {
       expect(screen.getByText("CNY 152.00")).toBeInTheDocument();

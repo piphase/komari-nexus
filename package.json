@@ -1,7 +1,7 @@
 {
   "name": "komari-web",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "next start",
+    "package:theme": "powershell -ExecutionPolicy Bypass -File ./script/package-theme.ps1",
+    "package:verify": "powershell -ExecutionPolicy Bypass -File ./script/verify-theme-package.ps1",
     "i18n:sync": "node ./script/i18n-sync.mjs",
     "i18n:sync:dry": "node ./script/i18n-sync.mjs --dry-run"
   },

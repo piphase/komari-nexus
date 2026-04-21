@@ -1,13 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import NodeDisplay from "@/components/NodeDisplay";
 
+const usePingStatsMock = vi.fn(() => ({
+  hasData: false,
+  avgLoss: 0,
+  avgVolatility: 0,
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => {
+    const translations: Record<string, string> = {
+      "common.all": "All",
+      "common.map": "Map",
+      "mapView.title": "Global Distribution",
+      "nodeDisplay.grid": "Cards",
+      "nodeDisplay.table": "List",
+      "nodeDisplay.remainingValueCalculator": "Remaining Value Calculator",
+      "nodeCard.pingStats": "Ping Stats",
+      "chart.lossRate": "Loss",
+      "chart.volatility": "Volatility",
+    };
+
     const translate = (key: string, options?: Record<string, unknown>) =>
-      typeof options?.defaultValue === "string" ? options.defaultValue : key;
+      translations[key] ?? (typeof options?.defaultValue === "string" ? options.defaultValue : key);
 
     return Object.assign([translate], { t: translate });
   },
@@ -37,11 +55,7 @@ vi.mock("@/hooks/use-mobile", () => ({
 }));
 
 vi.mock("@/hooks/usePingStats", () => ({
-  usePingStats: () => ({
-    hasData: false,
-    avgLoss: 0,
-    avgVolatility: 0,
-  }),
+  usePingStats: (...args: unknown[]) => usePingStatsMock(...args),
 }));
 
 vi.mock("@/utils", () => ({
@@ -137,14 +151,16 @@ const demoLiveData = {
 describe("NodeDisplay classic cards", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    usePingStatsMock.mockClear();
   });
-  it("uses 中文视图切换文案并默认进入地图视图", () => {
+
+  it("uses translated view labels and defaults to the map view", () => {
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    expect(screen.getByRole("button", { name: /地图/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /卡片/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /列表/i })).toBeInTheDocument();
-    expect(screen.getByText("全球分布")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /map/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cards/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /list/i })).toBeInTheDocument();
+    expect(screen.getByText("Global Distribution")).toBeInTheDocument();
     expect(screen.queryByText("node-table")).not.toBeInTheDocument();
   });
 
@@ -158,17 +174,17 @@ describe("NodeDisplay classic cards", () => {
     expect(screen.getByText("details:demo-node")).toBeInTheDocument();
   });
 
-  it("does not keep the previous view visible after switching to 列表", async () => {
+  it("does not keep the previous view visible after switching to the list view", async () => {
     const user = userEvent.setup();
 
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    expect(screen.getByText("全球分布")).toBeInTheDocument();
+    expect(screen.getByText("Global Distribution")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /列表/i }));
+    await user.click(screen.getByRole("button", { name: /list/i }));
 
     expect(screen.getByText("node-table")).toBeInTheDocument();
-    expect(screen.queryByText("全球分布")).not.toBeInTheDocument();
+    expect(screen.queryByText("Global Distribution")).not.toBeInTheDocument();
   });
 
   it("keeps the current view button visibly highlighted", async () => {
@@ -176,8 +192,8 @@ describe("NodeDisplay classic cards", () => {
 
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    const mapButton = screen.getByRole("button", { name: "地图" });
-    const tableButton = screen.getByRole("button", { name: "列表" });
+    const mapButton = screen.getByRole("button", { name: "Map" });
+    const tableButton = screen.getByRole("button", { name: "List" });
 
     expect(mapButton.className).toContain("border-border/80");
     expect(mapButton.className).toContain("ring-1");
@@ -198,7 +214,7 @@ describe("NodeDisplay classic cards", () => {
 
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    const openButton = screen.getByRole("button", { name: "剩余价值计算器" });
+    const openButton = screen.getByRole("button", { name: "Remaining Value Calculator" });
 
     await user.click(openButton);
 
@@ -208,13 +224,108 @@ describe("NodeDisplay classic cards", () => {
       }),
     );
   });
+
   it("keeps the remaining value calculator entry visually aligned with the dark card style", () => {
     render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
 
-    const openButton = screen.getByRole("button", { name: "剩余价值计算器" });
+    const openButton = screen.getByRole("button", { name: "Remaining Value Calculator" });
 
     expect(openButton.className).toContain("bg-card/95");
     expect(openButton.className).toContain("border-border/80");
     expect(openButton.className).toContain("ring-1");
+  });
+
+  it("restores the card ping summary hook when cards are shown", async () => {
+    const user = userEvent.setup();
+
+    render(<NodeDisplay nodes={[demoNode]} liveData={demoLiveData} />);
+
+    await user.click(screen.getByRole("button", { name: /cards/i }));
+
+    expect(usePingStatsMock).toHaveBeenCalledWith("demo-node", 24, {
+      enabled: false,
+    });
+  });
+
+  it("reveals cards in batches of 10 before loading the rest", () => {
+    vi.useFakeTimers();
+    const manyNodes = Array.from({ length: 12 }, (_, index) => ({
+      ...demoNode,
+      uuid: `demo-node-${index + 1}`,
+      name: `Demo Node ${index + 1}`,
+    }));
+    const manyLiveData = {
+      online: manyNodes.map((node) => node.uuid),
+      data: Object.fromEntries(
+        manyNodes.map((node) => [
+          node.uuid,
+          {
+            ...demoLiveData.data["demo-node"],
+          },
+        ]),
+      ),
+    };
+
+    render(<NodeDisplay nodes={manyNodes} liveData={manyLiveData} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /cards/i }));
+
+    expect(screen.getByText("Demo Node 1")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 10")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 11")).not.toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 12")).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(screen.getByText("Demo Node 11")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 12")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it("continues auto-loading later card batches without requiring scroll", () => {
+    vi.useFakeTimers();
+    const manyNodes = Array.from({ length: 25 }, (_, index) => ({
+      ...demoNode,
+      uuid: `demo-node-${index + 1}`,
+      name: `Demo Node ${index + 1}`,
+    }));
+    const manyLiveData = {
+      online: manyNodes.map((node) => node.uuid),
+      data: Object.fromEntries(
+        manyNodes.map((node) => [
+          node.uuid,
+          {
+            ...demoLiveData.data["demo-node"],
+          },
+        ]),
+      ),
+    };
+
+    render(<NodeDisplay nodes={manyNodes} liveData={manyLiveData} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /cards/i }));
+
+    expect(screen.queryByText("Demo Node 11")).not.toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 21")).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(40);
+    });
+
+    expect(screen.getByText("Demo Node 11")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 20")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 21")).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(40);
+    });
+
+    expect(screen.getByText("Demo Node 21")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 25")).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });

@@ -89,7 +89,7 @@ describe("NodeDetailsContent", () => {
 });
 
 describe("NodeDetailsPanel", () => {
-  it("renders reusable details when open", () => {
+  it("renders reusable details when open", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise(() => undefined))
@@ -99,8 +99,8 @@ describe("NodeDetailsPanel", () => {
       <NodeDetailsPanel open onOpenChange={() => undefined} uuid="demo-node" />
     );
 
-    expect(screen.getByText("Demo Node")).toBeInTheDocument();
-    expect(screen.getByText("demo-node")).toBeInTheDocument();
+    expect(await screen.findByText("Demo Node")).toBeInTheDocument();
+    expect(await screen.findByText("demo-node")).toBeInTheDocument();
   });
 
   it("calls onOpenChange(false) when close is pressed", async () => {

@@ -83,3 +83,12 @@ bundle-analysis.html
 
 # Local worktrees
 .worktrees/
+
+# Local AI / scratch workflow docs and patch leftovers
+docs/superpowers/
+*.orig
+*.rej
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.agents/

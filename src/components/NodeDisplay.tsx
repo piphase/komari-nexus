@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { Calculator, Grid3X3, Map as MapIcon, Search, Table2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -34,9 +34,18 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  const onlineKeyword = t("nodeCard.online", { defaultValue: "在线" }).toLowerCase();
+  const offlineKeyword = t("nodeCard.offline", { defaultValue: "离线" }).toLowerCase();
+
   const handleOpenNodeDetails = (uuid: string) => {
     setSelectedNodeUuid(uuid);
     setDetailsOpen(true);
+  };
+
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    startTransition(() => {
+      setViewMode(nextViewMode);
+    });
   };
 
   const handleDetailsOpenChange = (open: boolean) => {
@@ -97,12 +106,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
       const priceMatch = !Number.isNaN(Number(term)) && node.price.toString().includes(term);
       const isOnline = liveData?.online?.includes(node.uuid) || false;
       const statusMatch =
-        ((term === "online" || term === "在线") && isOnline) ||
-        ((term === "offline" || term === "离线") && !isOnline);
+        ((term === "online" || term === onlineKeyword) && isOnline) ||
+        ((term === "offline" || term === offlineKeyword) && !isOnline);
 
       return basicMatch || regionMatch || priceMatch || statusMatch;
     });
-  }, [liveData, nodes, searchTerm, selectedGroup]);
+  }, [liveData, nodes, offlineKeyword, onlineKeyword, searchTerm, selectedGroup]);
 
   const onlineCount =
     selectedGroup === "all"
@@ -116,19 +125,19 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           selectedGroup === "all"
             ? nodes.length
             : nodes.filter((node) => node.group === selectedGroup).length,
-        defaultValue: `找到 ${filteredNodes.length} 个节点`,
+        defaultValue: "找到 {{count}} 个服务器，共 {{total}} 个",
       })
     : selectedGroup === "all"
       ? t("nodeCard.totalNodes", {
           total: nodes.length,
           online: onlineCount,
-          defaultValue: `共 ${nodes.length} 个服务器，${onlineCount} 个在线`,
+          defaultValue: "共 {{total}} 个服务器，{{online}} 个在线",
         })
       : t("nodeCard.groupNodes", {
           group: selectedGroup,
           total: filteredNodes.length,
           online: onlineCount,
-          defaultValue: `${selectedGroup} 分组共 ${filteredNodes.length} 个服务器，${onlineCount} 个在线`,
+          defaultValue: "{{group}} 分组：共 {{total}} 个服务器，{{online}} 个在线",
         });
 
   return (
@@ -139,7 +148,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           <Input
             ref={searchRef}
             placeholder={t("search.placeholder", {
-              defaultValue: "搜索节点...（按 / 快速聚焦）",
+              defaultValue: "搜索节点名称、地区、系统...（按 / 快速聚焦）",
             })}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -171,7 +180,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
                   ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
                   : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
               )}
-              onClick={() => setViewMode("map")}
+              onClick={() => handleViewModeChange("map")}
             >
               <MapIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t("common.map", { defaultValue: "地图" })}</span>
@@ -185,10 +194,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
                   ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
                   : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
               )}
-              onClick={() => setViewMode("grid")}
+              onClick={() => handleViewModeChange("grid")}
             >
               <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">卡片</span>
+              <span className="hidden sm:inline">
+                {t("nodeDisplay.grid", { defaultValue: "卡片" })}
+              </span>
             </Button>
             <Button
               variant={viewMode === "table" ? "secondary" : "ghost"}
@@ -199,10 +210,12 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
                   ? "border-border/80 bg-card text-foreground shadow-sm ring-1 ring-white/10 dark:border-white/15 dark:ring-white/12 dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]"
                   : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
               )}
-              onClick={() => setViewMode("table")}
+              onClick={() => handleViewModeChange("table")}
             >
               <Table2 className="h-4 w-4" />
-              <span className="hidden sm:inline">列表</span>
+              <span className="hidden sm:inline">
+                {t("nodeDisplay.table", { defaultValue: "列表" })}
+              </span>
             </Button>
           </div>
         </div>
@@ -237,7 +250,9 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
             onClick={dispatchOpenRemainingValueCalculatorEvent}
           >
             <Calculator className="h-4 w-4" />
-            <span>剩余价值计算器</span>
+            <span>
+              {t("nodeDisplay.remainingValueCalculator", { defaultValue: "剩余价值计算器" })}
+            </span>
           </Button>
         </div>
       </div>
@@ -252,7 +267,7 @@ const NodeDisplay: React.FC<NodeDisplayProps> = ({ nodes, liveData }) => {
           {searchTerm.trim() && (
             <span className="text-sm text-muted-foreground">
               {t("search.try_different", {
-                defaultValue: "试试别的关键词",
+                defaultValue: "试试别的搜索关键词",
               })}
             </span>
           )}

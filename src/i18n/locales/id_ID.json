@@ -352,7 +352,31 @@
     "title": "Distribusi Global",
     "servers": "{{count}} server",
     "online": "{{count}} online",
-    "offline": "{{count}} offline"
+    "offline": "{{count}} offline",
+    "activeCountries": "{{count}} negara / wilayah aktif",
+    "ariaLabel": "Peta distribusi node global",
+    "countrySummary": "{{name}}: {{total}} node, {{online}} online, {{offline}} offline",
+    "legend": {
+      "online": "Semua online",
+      "partial": "Sebagian online",
+      "offline": "Semua offline"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "partial": "Sebagian online"
+    },
+    "unmappedRegions": "Wilayah yang belum dipetakan",
+    "unmappedCount": "Total {{count}} item",
+    "regionNodes": "{{count}} node di wilayah ini",
+    "stats": {
+      "nodes": "Node"
+    },
+    "unclassified": "Belum diklasifikasikan",
+    "viewDetails": "Lihat detail {{name}}",
+    "emptySelectionTitle": "Saat ini tidak ada wilayah yang bisa ditampilkan",
+    "emptySelectionDescription": "Node-node ini tetap dihitung seperti biasa, tetapi nilai wilayahnya belum cocok dengan pemetaan peta. Lihat daftar \"Wilayah yang belum dipetakan\" di sisi kiri terlebih dahulu.",
+    "regionUnknown": "Belum diisi"
   },
   "network_speed": "Kecepatan Jaringan",
   "nodeCard": {
@@ -721,5 +745,74 @@
     "mode": "Mode Tampilan"
   },
   "warn_https": "Koneksi saat ini bukan HTTPS! Data sensitif Anda berisiko. Amankan koneksi sekarang! Fitur salin mungkin tidak tersedia!",
-  "warn_websocket": "Permintaan RPC2 gagal, periksa koneksi jaringan atau status server!"
+  "warn_websocket": "Permintaan RPC2 gagal, periksa koneksi jaringan atau status server!",
+  "nodeDisplay": {
+    "grid": "Kartu",
+    "table": "Daftar",
+    "remainingValueCalculator": "Kalkulator Nilai Tersisa"
+  },
+  "remainingValue": {
+    "title": "Kalkulator Nilai Tersisa",
+    "description": "Lihat nilai tersisa node dan hasil konversi kurs.",
+    "total": "Total Nilai Tersisa",
+    "placeholderPending": "Belum dikonversi",
+    "refreshRates": "Segarkan Kurs",
+    "rateProvider": "Kurs online disediakan oleh Frankfurter dan hanya diminta setelah Anda membuka kalkulator.",
+    "errorRatesUnavailable": "Saat ini kurs tidak dapat diambil",
+    "billingCycle": {
+      "once": "Sekali bayar",
+      "days": "{{count}} hari"
+    },
+    "remainingTime": {
+      "longTerm": "Jangka panjang",
+      "oneTime": "Sekali bayar",
+      "value": "{{days}} hari {{hours}} jam"
+    },
+    "skipReason": {
+      "missing_price": "Harga belum diisi",
+      "missing_currency": "Mata uang belum diisi",
+      "unsupported_currency": "Mata uang belum didukung",
+      "missing_expired_at": "Waktu kedaluwarsa belum diisi",
+      "invalid_expired_at": "Format waktu kedaluwarsa tidak valid",
+      "unsupported_billing_cycle": "Siklus tagihan belum diisi",
+      "default": "Informasi tidak lengkap"
+    },
+    "card": {
+      "originalPrice": "Harga awal {{amount}} / {{cycle}}",
+      "remainingTime": "Sisa waktu {{value}}",
+      "originalValue": "Nilai mata uang asli {{amount}}",
+      "skipReason": "Alasan tidak dimasukkan",
+      "expiredValue": "Nilai tersisa 0"
+    },
+    "filter": {
+      "all": "Semua {{count}}",
+      "active": "Dihitung {{count}}",
+      "skipped": "Dilewati {{count}}",
+      "expired": "Kedaluwarsa {{count}}"
+    },
+    "section": {
+      "active": "Node yang dihitung",
+      "skipped": "Node yang dilewati",
+      "expired": "Node kedaluwarsa"
+    },
+    "empty": {
+      "none": "Tidak ada node yang bisa ditampilkan saat ini",
+      "active": "Tidak ada node yang bisa dihitung saat ini",
+      "skipped": "Tidak ada node yang dilewati saat ini",
+      "expired": "Tidak ada node yang kedaluwarsa saat ini"
+    },
+    "rateStatus": {
+      "loading": "Menunggu kurs",
+      "stale": "Kurs bukan yang terbaru",
+      "updatedAt": "Kurs diperbarui pada {{value}}"
+    }
+  },
+  "visitorInfo": {
+    "unavailable": "Tidak tersedia",
+    "title": "Info Pengunjung",
+    "latency": "Latensi",
+    "ip": "Alamat IP",
+    "location": "Lokasi",
+    "reopen": "Buka lagi info pengunjung"
+  }
 }

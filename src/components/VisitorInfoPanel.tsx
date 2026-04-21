@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Globe, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import Flag from "@/components/Flag";
 
@@ -10,12 +11,6 @@ const INTRO_DELAY = 32;
 const LATENCY_TIMEOUT = 4000;
 const INFO_ENDPOINT = "https://ipinfo.io/json";
 const LATENCY_ENDPOINT = "https://www.cloudflare.com/cdn-cgi/trace";
-const UNAVAILABLE = "不可用";
-const PANEL_TITLE = "访客信息";
-const LATENCY_LABEL = "延迟";
-const IP_LABEL = "IP 地址";
-const LOCATION_LABEL = "地理位置";
-const REOPEN_LABEL = "重新展开访客信息";
 
 type VisitorInfoPayload = {
   ip?: string;
@@ -35,20 +30,25 @@ type VisitorInfoState = {
 const sanitizeCountryCode = (value?: string) =>
   typeof value === "string" && /^[A-Za-z]{2}$/.test(value) ? value.toUpperCase() : null;
 
-const buildLocation = (city?: string, country?: string) => {
+const buildLocation = (
+  city: string | undefined,
+  country: string | undefined,
+  locale: string,
+  unavailableLabel: string,
+) => {
   const countryCode = sanitizeCountryCode(country);
   const countryName = countryCode
-    ? new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ?? countryCode
-    : country ?? UNAVAILABLE;
+    ? new Intl.DisplayNames([locale], { type: "region" }).of(countryCode) ?? countryCode
+    : country ?? unavailableLabel;
 
   if (city && countryName) {
     return `${city}, ${countryName}`;
   }
 
-  return countryName || city || UNAVAILABLE;
+  return countryName || city || unavailableLabel;
 };
 
-const measureLatency = async (signal: AbortSignal) => {
+const measureLatency = async (signal: AbortSignal, unavailableLabel: string) => {
   const samples: number[] = [];
 
   try {
@@ -72,7 +72,7 @@ const measureLatency = async (signal: AbortSignal) => {
   }
 
   if (samples.length === 0) {
-    return UNAVAILABLE;
+    return unavailableLabel;
   }
 
   if (samples.length > 1) {
@@ -86,21 +86,33 @@ const measureLatency = async (signal: AbortSignal) => {
   )} ms`;
 };
 
-const measureLatencyWithTimeout = async (signal: AbortSignal) =>
+const measureLatencyWithTimeout = async (
+  signal: AbortSignal,
+  unavailableLabel: string,
+) =>
   new Promise<string>((resolve) => {
     const timeoutId = window.setTimeout(() => {
-      resolve(UNAVAILABLE);
+      resolve(unavailableLabel);
     }, LATENCY_TIMEOUT);
 
-    void measureLatency(signal)
+    void measureLatency(signal, unavailableLabel)
       .then((latency) => resolve(latency))
-      .catch(() => resolve(UNAVAILABLE))
+      .catch(() => resolve(unavailableLabel))
       .finally(() => {
         window.clearTimeout(timeoutId);
       });
   });
 
 export default function VisitorInfoPanel() {
+  const { t, i18n } = useTranslation();
+  const unavailableLabel = t("visitorInfo.unavailable", { defaultValue: "不可用" });
+  const panelTitle = t("visitorInfo.title", { defaultValue: "访客信息" });
+  const latencyLabel = t("visitorInfo.latency", { defaultValue: "延迟" });
+  const ipLabel = t("visitorInfo.ip", { defaultValue: "IP 地址" });
+  const locationLabel = t("visitorInfo.location", { defaultValue: "地理位置" });
+  const reopenLabel = t("visitorInfo.reopen", { defaultValue: "重新展开访客信息" });
+  const locale = i18n.resolvedLanguage || i18n.language || "en";
+
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<VisitorInfoState | null>(null);
   const [hasPresented, setHasPresented] = useState(false);
@@ -143,17 +155,17 @@ export default function VisitorInfoPanel() {
         }
 
         const payload = (await response.json()) as VisitorInfoPayload;
-        const latency = await measureLatencyWithTimeout(controller.signal);
+        const latency = await measureLatencyWithTimeout(controller.signal, unavailableLabel);
 
         if (cancelled || controller.signal.aborted) {
           return;
         }
 
         setState({
-          ip: payload.ip || UNAVAILABLE,
-          location: buildLocation(payload.city, payload.country),
+          ip: payload.ip || unavailableLabel,
+          location: buildLocation(payload.city, payload.country, locale, unavailableLabel),
           countryCode: sanitizeCountryCode(payload.country),
-          organization: payload.org || UNAVAILABLE,
+          organization: payload.org || unavailableLabel,
           latency,
         });
         setHasPresented(false);
@@ -189,10 +201,10 @@ export default function VisitorInfoPanel() {
       clearAutoHide();
       clearIntroTimer();
     };
-  }, []);
+  }, [locale, unavailableLabel]);
 
   const latencyTone = useMemo(() => {
-    if (!state || state.latency === UNAVAILABLE) {
+    if (!state || state.latency === unavailableLabel) {
       return "bg-muted text-muted-foreground";
     }
 
@@ -200,7 +212,7 @@ export default function VisitorInfoPanel() {
     return numericValue > 200
       ? "bg-orange-500/15 text-orange-700 dark:text-orange-300"
       : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300";
-  }, [state]);
+  }, [state, unavailableLabel]);
 
   const pauseAutoHide = () => {
     clearAutoHide();
@@ -251,10 +263,10 @@ export default function VisitorInfoPanel() {
               ) : (
                 <Activity className="h-4 w-4 text-primary" />
               )}
-              <span>{PANEL_TITLE}</span>
+              <span>{panelTitle}</span>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${latencyTone}`}>
-              {LATENCY_LABEL} {state.latency}
+              {latencyLabel} {state.latency}
             </span>
           </div>
 
@@ -262,7 +274,7 @@ export default function VisitorInfoPanel() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Globe className="h-4 w-4" />
-                <span>{IP_LABEL}</span>
+                <span>{ipLabel}</span>
               </div>
               <span className="font-mono text-right text-sm text-foreground">{state.ip}</span>
             </div>
@@ -270,7 +282,7 @@ export default function VisitorInfoPanel() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-2 pt-0.5 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>{LOCATION_LABEL}</span>
+                <span>{locationLabel}</span>
               </div>
               <div className="max-w-[13.5rem] text-right text-foreground">
                 <span className="line-clamp-2 break-words">{state.location}</span>
@@ -286,7 +298,7 @@ export default function VisitorInfoPanel() {
 
       <button
         type="button"
-        aria-label={REOPEN_LABEL}
+        aria-label={reopenLabel}
         data-testid="visitor-info-toggle"
         data-state={!hasPresented || open ? "hidden" : "visible"}
         onClick={reopen}

@@ -3,6 +3,35 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import VisitorInfoPanel from "@/components/VisitorInfoPanel";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        "visitorInfo.unavailable": "Unavailable",
+        "visitorInfo.title": "Visitor Info",
+        "visitorInfo.latency": "Latency",
+        "visitorInfo.ip": "IP Address",
+        "visitorInfo.location": "Location",
+        "visitorInfo.reopen": "Reopen visitor info",
+      };
+
+      const template = translations[key];
+      if (template) {
+        return Object.entries(options ?? {}).reduce(
+          (result, [name, value]) => result.replaceAll(`{{${name}}}`, String(value)),
+          template,
+        );
+      }
+
+      return typeof options?.defaultValue === "string" ? options.defaultValue : key;
+    },
+    i18n: {
+      language: "en",
+      resolvedLanguage: "en",
+    },
+  }),
+}));
+
 vi.mock("@/components/Flag", () => ({
   default: ({ flag }: { flag: string }) => <span data-testid={`flag-${flag}`} />,
 }));
@@ -93,6 +122,10 @@ describe("VisitorInfoPanel", () => {
     });
 
     expect(within(panel).getByTestId("flag-AR")).toBeInTheDocument();
+    expect(within(panel).getByText("Visitor Info")).toBeInTheDocument();
+    expect(within(panel).getByText(/Latency/)).toBeInTheDocument();
+    expect(within(panel).getByText("IP Address")).toBeInTheDocument();
+    expect(within(panel).getByText("Location")).toBeInTheDocument();
     expect(panel).toHaveClass("bg-card/92");
     expect(panel).toHaveClass("ring-1");
     expect(panel).toHaveClass("dark:ring-white/12");
@@ -105,6 +138,7 @@ describe("VisitorInfoPanel", () => {
     expect(organizationText.parentElement).toHaveClass("shadow-inner");
 
     const reopenButton = screen.getByTestId("visitor-info-toggle");
+    expect(reopenButton).toHaveAttribute("aria-label", "Reopen visitor info");
     expect(reopenButton).toHaveClass("bg-card/95");
     expect(reopenButton).toHaveClass("ring-1");
     expect(reopenButton).toHaveClass("dark:ring-white/12");

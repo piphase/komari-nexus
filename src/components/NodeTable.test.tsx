@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 
 import NodeTable from "@/components/NodeTable";
 
@@ -104,5 +104,77 @@ describe("NodeTable", () => {
     expect(screen.getAllByText("nodeCard.ram")[0]?.closest("th")).toHaveClass("w-[124px]");
     expect(screen.getAllByText("nodeCard.disk")[0]?.closest("th")).toHaveClass("w-[124px]");
     expect(screen.getAllByText("nodeCard.cpu")[1]?.closest('[data-slot=\"table-cell\"]')).toHaveClass("py-3");
+  });
+
+  it("renders rows in batches of 10 until the table is complete", () => {
+    vi.useFakeTimers();
+
+    const nodes = Array.from({ length: 25 }, (_, index) => ({
+      uuid: `node-${index + 1}`,
+      name: `Demo Node ${index + 1}`,
+      region: "US",
+      os: "Debian",
+      arch: "x86_64",
+      cpu_name: "CPU",
+      virtualization: "KVM",
+      cpu_cores: 4,
+      kernel_version: "6.1",
+      gpu_name: "",
+      mem_total: 1024,
+      swap_total: 0,
+      disk_total: 2048,
+      version: "",
+      weight: index + 1,
+      price: 0,
+      tags: "",
+      billing_cycle: 0,
+      currency: "",
+      group: "Core",
+      traffic_limit: 0,
+      traffic_limit_type: "sum",
+      expired_at: "",
+      ipv4: 1,
+      ipv6: 1,
+    }));
+
+    const liveData = {
+      online: nodes.map((node) => node.uuid),
+      data: Object.fromEntries(
+        nodes.map((node) => [
+          node.uuid,
+          {
+            cpu: { usage: 25 },
+            ram: { used: 256 },
+            disk: { used: 512 },
+            network: { up: 1, down: 2, totalUp: 3, totalDown: 4 },
+            uptime: 3600,
+          },
+        ]),
+      ),
+    };
+
+    render(<NodeTable nodes={nodes} liveData={liveData} />);
+
+    expect(screen.getByText("Demo Node 1")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 10")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 11")).not.toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 21")).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(40);
+    });
+
+    expect(screen.getByText("Demo Node 11")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 20")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Node 21")).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(40);
+    });
+
+    expect(screen.getByText("Demo Node 21")).toBeInTheDocument();
+    expect(screen.getByText("Demo Node 25")).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });

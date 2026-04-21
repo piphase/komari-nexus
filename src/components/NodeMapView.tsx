@@ -22,26 +22,28 @@ interface NodeMapViewProps {
   onOpenNodeDetails?: (uuid: string) => void;
 }
 
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
 const SVG_WIDTH = 1000;
 const SVG_HEIGHT = 560;
 const MAP_HORIZONTAL_PADDING = 28;
 const MAP_TOP_PADDING = 42;
 const MAP_BOTTOM_INSET = 42;
 
-function getStatusText(status: "online" | "offline" | "partial") {
+function getStatusText(t: TranslateFn, status: "online" | "offline" | "partial") {
   switch (status) {
     case "online":
-      return "在线";
+      return t("mapView.status.online", { defaultValue: "在线" });
     case "offline":
-      return "离线";
+      return t("mapView.status.offline", { defaultValue: "离线" });
     default:
-      return "部分在线";
+      return t("mapView.status.partial", { defaultValue: "部分在线" });
   }
 }
 
-function getUnmappedRegionLabel(region: string) {
+function getUnmappedRegionLabel(t: TranslateFn, region: string) {
   const normalizedRegion = region.trim();
-  return normalizedRegion || "未填写";
+  return normalizedRegion || t("mapView.regionUnknown", { defaultValue: "未填写" });
 }
 
 function getRegionStatusBadgeClass(status: "online" | "offline" | "partial") {
@@ -157,7 +159,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             <p className="text-sm text-muted-foreground">
               {t("mapView.activeCountries", {
                 count: summary.regions.length,
-                defaultValue: `${summary.regions.length} 个活跃国家/地区`,
+                defaultValue: "{{count}} 个活跃国家 / 地区",
               })}
             </p>
           </div>
@@ -169,7 +171,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             >
               {t("mapView.servers", {
                 count: summary.totalNodes,
-                defaultValue: `${summary.totalNodes} 台节点`,
+                defaultValue: "{{count}} 台节点",
               })}
             </Badge>
             <Badge
@@ -178,7 +180,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             >
               {t("mapView.online", {
                 count: summary.onlineNodes,
-                defaultValue: `${summary.onlineNodes} 台在线`,
+                defaultValue: "{{count}} 台在线",
               })}
             </Badge>
             <Badge
@@ -187,7 +189,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
             >
               {t("mapView.offline", {
                 count: summary.offlineNodes,
-                defaultValue: `${summary.offlineNodes} 台离线`,
+                defaultValue: "{{count}} 台离线",
               })}
             </Badge>
           </div>
@@ -201,7 +203,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
               className="node-map-view__svg"
               role="img"
-              aria-label="全球节点分布地图"
+              aria-label={t("mapView.ariaLabel", { defaultValue: "全球节点分布地图" })}
             >
               <path d={projectedMap.spherePath} className="node-map-view__ocean" />
               <path d={projectedMap.graticulePath} className="node-map-view__graticule" />
@@ -222,7 +224,14 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                       >
                         <title>
                           {region
-                            ? `${region.label}: ${region.total} 台节点，${region.online} 台在线，${region.offline} 台离线`
+                            ? t("mapView.countrySummary", {
+                                name: region.label,
+                                total: region.total,
+                                online: region.online,
+                                offline: region.offline,
+                                defaultValue:
+                                  "{{name}}：{{total}} 台节点，{{online}} 台在线，{{offline}} 台离线",
+                              })
                             : country.name}
                         </title>
                       </path>
@@ -237,15 +246,15 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                 <div className="node-map-view__legend-items node-map-view__legend-items--stacked">
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-online" />
-                    全部在线
+                    {t("mapView.legend.online", { defaultValue: "全部在线" })}
                   </span>
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-partial" />
-                    部分在线
+                    {t("mapView.legend.partial", { defaultValue: "部分在线" })}
                   </span>
                   <span className="node-map-view__legend-item">
                     <span className="node-map-view__legend-dot status-offline" />
-                    全部离线
+                    {t("mapView.legend.offline", { defaultValue: "全部离线" })}
                   </span>
                 </div>
               </div>
@@ -253,19 +262,24 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               {summary.unmappedNodes.length > 0 && (
                 <div className="node-map-view__legend-card node-map-view__legend-card--stacked">
                   <div className="node-map-view__legend-unmapped-header">
-                    <span className="text-xs font-semibold text-foreground">未显示地区</span>
+                    <span className="text-xs font-semibold text-foreground">
+                      {t("mapView.unmappedRegions", { defaultValue: "未显示地区" })}
+                    </span>
                     <Badge
                       variant="secondary"
                       className="rounded-full bg-amber-500/12 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/18 dark:text-amber-300"
                     >
-                      {`共 ${summary.unmappedNodes.length} 项`}
+                      {t("mapView.unmappedCount", {
+                        count: summary.unmappedNodes.length,
+                        defaultValue: "共 {{count}} 项",
+                      })}
                     </Badge>
                   </div>
                   <div className="node-map-view__legend-unmapped-list">
                     {summary.unmappedNodes.map((node) => (
                       <div key={`${node.uuid}-unmapped`} className="node-map-view__legend-unmapped-item">
                         <span className="node-map-view__legend-unmapped-region">
-                          {getUnmappedRegionLabel(node.region)}
+                          {getUnmappedRegionLabel(t, node.region)}
                         </span>
                         <span className="node-map-view__legend-unmapped-node">{node.name}</span>
                       </div>
@@ -288,7 +302,12 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                       <h3 className="text-xl font-semibold tracking-tight text-foreground">
                         {selectedRegion.label}
                       </h3>
-                      <p className="text-sm text-muted-foreground">{`该地区共 ${selectedRegion.total} 台节点`}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("mapView.regionNodes", {
+                          count: selectedRegion.total,
+                          defaultValue: "该地区共 {{count}} 台节点",
+                        })}
+                      </p>
                     </div>
                   </div>
 
@@ -296,14 +315,14 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                     variant="secondary"
                     className={`shrink-0 whitespace-nowrap rounded-full ${getRegionStatusBadgeClass(selectedRegion.status)}`}
                   >
-                    {getStatusText(selectedRegion.status)}
+                    {getStatusText(t, selectedRegion.status)}
                   </Badge>
                 </div>
 
                 <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
                   <div className="rounded-2xl border border-border/60 bg-muted/50 px-4 py-4">
                     <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                      节点数
+                      {t("mapView.stats.nodes", { defaultValue: "节点数" })}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-foreground">
                       {selectedRegion.total}
@@ -311,7 +330,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                   </div>
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 dark:border-emerald-500/25 dark:bg-emerald-500/14">
                     <div className="text-xs uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-                      在线
+                      {t("nodeCard.online", { defaultValue: "在线" })}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-emerald-900 dark:text-emerald-200">
                       {selectedRegion.online}
@@ -319,7 +338,7 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                   </div>
                   <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-4 dark:border-rose-500/25 dark:bg-rose-500/14">
                     <div className="text-xs uppercase tracking-[0.16em] text-rose-700 dark:text-rose-300">
-                      离线
+                      {t("nodeCard.offline", { defaultValue: "离线" })}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-rose-900 dark:text-rose-200">
                       {selectedRegion.offline}
@@ -330,7 +349,8 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                 <div className="node-map-view__node-list">
                   {selectedRegion.nodes.map((node) => {
                     const online = (liveData?.online ?? []).includes(node.uuid);
-                    const secondaryText = node.group?.trim() || "暂未分类";
+                    const secondaryText =
+                      node.group?.trim() || t("mapView.unclassified", { defaultValue: "暂未分类" });
 
                     return (
                       <button
@@ -338,7 +358,10 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
                         type="button"
                         className="node-map-view__node-card bg-card/80"
                         onClick={() => onOpenNodeDetails?.(node.uuid)}
-                        aria-label={`查看 ${node.name} 详情`}
+                        aria-label={t("mapView.viewDetails", {
+                          name: node.name,
+                          defaultValue: "查看 {{name}} 详情",
+                        })}
                       >
                         <div className="min-w-0 text-left">
                           <div className="truncate font-medium text-foreground">{node.name}</div>
@@ -365,10 +388,15 @@ export function NodeMapView({ nodes, liveData, onOpenNodeDetails }: NodeMapViewP
               <div className="node-map-view__detail-card node-map-view__detail-card--empty">
                 <div className="node-map-view__detail-empty">
                   <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                    当前没有可显示的地区
+                    {t("mapView.emptySelectionTitle", {
+                      defaultValue: "当前没有可显示的地区",
+                    })}
                   </h3>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    这些节点仍在正常统计中，只是地区值暂时没有命中地图映射。先看左侧“未显示地区”列表，就能知道具体是哪一项需要补充。
+                    {t("mapView.emptySelectionDescription", {
+                      defaultValue:
+                        "这些节点仍会正常参与统计，只是地区值暂时还没有命中地图映射。先看左侧“未显示地区”列表，就能知道具体是哪一项需要补充。",
+                    })}
                   </p>
                 </div>
               </div>

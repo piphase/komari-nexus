@@ -352,7 +352,31 @@
     "title": "グローバル分布",
     "servers": "サーバー {{count}} 台",
     "online": "オンライン {{count}} 台",
-    "offline": "オフライン {{count}} 台"
+    "offline": "オフライン {{count}} 台",
+    "activeCountries": "{{count}} のアクティブな国 / 地域",
+    "ariaLabel": "グローバルノード分布マップ",
+    "countrySummary": "{{name}}: {{total}} 台、オンライン {{online}} 台、オフライン {{offline}} 台",
+    "legend": {
+      "online": "すべてオンライン",
+      "partial": "一部オンライン",
+      "offline": "すべてオフライン"
+    },
+    "status": {
+      "online": "オンライン",
+      "offline": "オフライン",
+      "partial": "一部オンライン"
+    },
+    "unmappedRegions": "未表示の地域",
+    "unmappedCount": "合計 {{count}} 件",
+    "regionNodes": "この地域のノード {{count}} 台",
+    "stats": {
+      "nodes": "ノード数"
+    },
+    "unclassified": "未分類",
+    "viewDetails": "{{name}} の詳細を表示",
+    "emptySelectionTitle": "現在表示できる地域がありません",
+    "emptySelectionDescription": "これらのノードは通常どおり集計されていますが、地域の値がまだ地図のマッピングに一致していません。左側の「未表示の地域」一覧を確認してください。",
+    "regionUnknown": "未設定"
   },
   "network_speed": "ネットワーク速度",
   "nodeCard": {
@@ -721,5 +745,74 @@
     "mode": "表示モード"
   },
   "warn_https": "現在の接続は HTTPS ではありません！あなたの敏感なデータには重大なリスクがあります。接続を安全にするために直ちに対策を講じてください！コピー操作は使用できない可能性があります！",
-  "warn_websocket": "RPC2 リクエストに失敗しました。ネットワーク接続またはサーバーの状態を確認してください！"
+  "warn_websocket": "RPC2 リクエストに失敗しました。ネットワーク接続またはサーバーの状態を確認してください！",
+  "nodeDisplay": {
+    "grid": "カード",
+    "table": "一覧",
+    "remainingValueCalculator": "残存価値計算機"
+  },
+  "remainingValue": {
+    "title": "残存価値計算機",
+    "description": "ノードの残存価値と為替換算結果を確認します。",
+    "total": "合計残存価値",
+    "placeholderPending": "未換算",
+    "refreshRates": "為替を更新",
+    "rateProvider": "オンライン為替レートは Frankfurter により提供され、計算機を開いた後にのみ取得されます。",
+    "errorRatesUnavailable": "現在は為替レートを取得できません",
+    "billingCycle": {
+      "once": "買い切り",
+      "days": "{{count}} 日"
+    },
+    "remainingTime": {
+      "longTerm": "長期",
+      "oneTime": "買い切り",
+      "value": "{{days}} 日 {{hours}} 時間"
+    },
+    "skipReason": {
+      "missing_price": "価格未設定",
+      "missing_currency": "通貨未設定",
+      "unsupported_currency": "この通貨はまだ未対応です",
+      "missing_expired_at": "有効期限未設定",
+      "invalid_expired_at": "有効期限の形式が無効です",
+      "unsupported_billing_cycle": "課金周期未設定",
+      "default": "情報が不完全です"
+    },
+    "card": {
+      "originalPrice": "元価格 {{amount}} / {{cycle}}",
+      "remainingTime": "残り時間 {{value}}",
+      "originalValue": "元通貨での価値 {{amount}}",
+      "skipReason": "除外理由",
+      "expiredValue": "残存価値 0"
+    },
+    "filter": {
+      "all": "すべて {{count}}",
+      "active": "計算対象 {{count}}",
+      "skipped": "除外 {{count}}",
+      "expired": "期限切れ {{count}}"
+    },
+    "section": {
+      "active": "計算対象ノード",
+      "skipped": "除外ノード",
+      "expired": "期限切れノード"
+    },
+    "empty": {
+      "none": "表示できるノードがありません",
+      "active": "計算対象のノードがありません",
+      "skipped": "除外ノードがありません",
+      "expired": "期限切れノードはありません"
+    },
+    "rateStatus": {
+      "loading": "為替レートを取得中",
+      "stale": "為替レートは最新ではありません",
+      "updatedAt": "為替更新時刻 {{value}}"
+    }
+  },
+  "visitorInfo": {
+    "unavailable": "利用不可",
+    "title": "訪問者情報",
+    "latency": "遅延",
+    "ip": "IP アドレス",
+    "location": "所在地",
+    "reopen": "訪問者情報を再表示"
+  }
 }

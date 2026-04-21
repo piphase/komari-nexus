@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, ArrowUp, ArrowDown, Activity } from "lucide-react";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type { NodeBasicInfo } from "@/contexts/NodeListContext";
 import type { LiveData, Record } from "../types/LiveData";
@@ -15,7 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { getOSImage, getOSName } from "@/utils";
 import { formatBytes } from "@/utils/unitHelper";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useDeferredVisibility } from "@/hooks/useDeferredVisibility";
 import { usePingStats } from "@/hooks/usePingStats";
+import { useProgressiveRender } from "@/hooks/useProgressiveRender";
 
 import Flag from "./Flag";
 import PriceTags from "./PriceTags";
@@ -97,7 +100,8 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
   const [t] = useTranslation();
   const isMobile = useIsMobile();
   const { themeConfig } = useTheme();
-  const pingStats = usePingStats(basic.uuid, 24);
+  const [cardRef, enhancementsReady] = useDeferredVisibility<HTMLDivElement>();
+  const pingStats = usePingStats(basic.uuid, 24, { enabled: enhancementsReady });
   const isClassicInteractive =
     themeConfig.cardLayout === "classic" && !!onOpenNodeDetails;
 
@@ -180,6 +184,7 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
 
   return (
     <Card
+      ref={cardRef}
       id={basic.uuid}
       className={`${cardStyles[themeConfig.cardLayout] || cardStyles.classic} ${
         isClassicInteractive ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/30" : ""
@@ -335,7 +340,6 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
 
           <Separator className="opacity-30" />
 
-          {/* Ping Statistics */}
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">{t("nodeCard.pingStats")}</span>
             {pingStats.hasData ? (
@@ -347,6 +351,8 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
               <span className="text-xs text-muted-foreground/70 italic">{t("nodeCard.noPingData")}</span>
             )}
           </div>
+
+          <Separator className="opacity-30" />
 
           {/* Traffic Limit Progress (if exists) */}
           {basic.traffic_limit > 0 && (
@@ -400,22 +406,66 @@ type NodeGridProps = {
   onOpenNodeDetails?: (uuid: string) => void;
 };
 
+const NodeCardSkeleton = ({ count }: { count: number }) => {
+  return Array.from({ length: count }, (_, index) => (
+    <div
+      key={`node-card-skeleton-${index}`}
+      className="rounded-lg border bg-card/70 p-4 shadow-sm"
+    >
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-6 w-6 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+        </div>
+        <div className="space-y-2 rounded-lg bg-muted/30 p-3">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    </div>
+  ));
+};
+
 export const NodeGrid = ({ nodes, liveData, onOpenNodeDetails }: NodeGridProps) => {
   // Ensure liveData is valid
   const onlineNodes = liveData && liveData.online ? liveData.online : [];
+  const onlineNodeSet = useMemo(() => new Set(onlineNodes), [onlineNodes]);
+  const progressiveResetKey = useMemo(
+    () => `grid:${nodes.map((node) => node.uuid).join("|")}`,
+    [nodes],
+  );
 
   // Sort nodes: Online first, then by weight
-  const sortedNodes = [...nodes].sort((a, b) => {
-    const aOnline = onlineNodes.includes(a.uuid);
-    const bOnline = onlineNodes.includes(b.uuid);
+  const sortedNodes = useMemo(() => {
+    return [...nodes].sort((a, b) => {
+      const aOnline = onlineNodeSet.has(a.uuid);
+      const bOnline = onlineNodeSet.has(b.uuid);
 
-    // If one is online and the other is offline, online comes first
-    if (aOnline !== bOnline) {
-      return aOnline ? -1 : 1;
-    }
+      if (aOnline !== bOnline) {
+        return aOnline ? -1 : 1;
+      }
 
-    // Otherwise sort by weight (ascending - though typical logic is often descending for weight, keeping original logic here: a.weight - b.weight)
-    return a.weight - b.weight;
+      return a.weight - b.weight;
+    });
+  }, [nodes, onlineNodeSet]);
+
+  const { visibleItems, remainingCount } = useProgressiveRender(sortedNodes, {
+    enabled: true,
+    initialCount: 10,
+    batchSize: 10,
+    batchDelayMs: 32,
+    revealAllOnInteraction: false,
+    resetKey: progressiveResetKey,
   });
 
   return (
@@ -425,8 +475,8 @@ export const NodeGrid = ({ nodes, liveData, onOpenNodeDetails }: NodeGridProps) 
         gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
       }}
     >
-      {sortedNodes.map((node) => {
-        const isOnline = onlineNodes.includes(node.uuid);
+      {visibleItems.map((node) => {
+        const isOnline = onlineNodeSet.has(node.uuid);
         const nodeData =
           liveData && liveData.data ? liveData.data[node.uuid] : undefined;
 
@@ -440,6 +490,7 @@ export const NodeGrid = ({ nodes, liveData, onOpenNodeDetails }: NodeGridProps) 
           />
         );
       })}
+      {remainingCount > 0 ? <NodeCardSkeleton count={Math.min(10, remainingCount)} /> : null}
     </div>
   );
 };
