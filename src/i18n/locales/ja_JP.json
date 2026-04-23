@@ -420,7 +420,15 @@
     "totalTransfer": "総転送量",
     "totalUpload": "総アップロード",
     "uptime": "稼働時間",
-    "virtualization": "仮想化"
+    "virtualization": "仮想化",
+    "monthlyRemainingTraffic": "今月の残りトラフィック",
+    "uploadAmount": "アップロード量",
+    "downloadAmount": "ダウンロード量",
+    "trafficStatTypeSum": "合計",
+    "trafficStatTypeUp": "アップロードのみ",
+    "trafficStatTypeDown": "ダウンロードのみ",
+    "trafficStatTypeMax": "大きい方",
+    "trafficStatTypeMin": "小さい方"
   },
   "nodes": {
     "empty": "サーバーデータはありません"

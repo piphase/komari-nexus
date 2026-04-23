@@ -420,7 +420,15 @@
     "totalTransfer": "Total Transfer",
     "totalUpload": "Total Unggahan",
     "uptime": "Waktu Aktif",
-    "virtualization": "Virtualisasi"
+    "virtualization": "Virtualisasi",
+    "monthlyRemainingTraffic": "Sisa Lalu Lintas Bulan Ini",
+    "uploadAmount": "Unggah",
+    "downloadAmount": "Unduh",
+    "trafficStatTypeSum": "Total",
+    "trafficStatTypeUp": "Hanya Unggah",
+    "trafficStatTypeDown": "Hanya Unduh",
+    "trafficStatTypeMax": "Nilai Lebih Besar",
+    "trafficStatTypeMin": "Nilai Lebih Kecil"
   },
   "nodes": {
     "empty": "Tidak ada data server"

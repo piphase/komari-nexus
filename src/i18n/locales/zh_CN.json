@@ -420,7 +420,15 @@
     "totalTransfer": "总传输",
     "totalUpload": "总上传",
     "uptime": "运行时间",
-    "virtualization": "虚拟化"
+    "virtualization": "虚拟化",
+    "monthlyRemainingTraffic": "本月剩余流量",
+    "uploadAmount": "上传量",
+    "downloadAmount": "下载量",
+    "trafficStatTypeSum": "总量",
+    "trafficStatTypeUp": "仅上传",
+    "trafficStatTypeDown": "仅下载",
+    "trafficStatTypeMax": "取较大值",
+    "trafficStatTypeMin": "取较小值"
   },
   "nodes": {
     "empty": "暂无服务器数据"

@@ -43,24 +43,6 @@ export function formatUptime(seconds: number, t: TFunction): string {
   return parts.join(" ");
 }
 
-function getTrafficPercentage(totalUp: number, totalDown: number, limit: number, type: "max" | "min" | "sum" | "up" | "down") {
-  if (limit === 0) return 0;
-  switch (type) {
-    case "max":
-      return Math.max(totalUp, totalDown) / limit * 100;
-    case "min":
-      return Math.min(totalUp, totalDown) / limit * 100;
-    case "sum":
-      return (totalUp + totalDown) / limit * 100;
-    case "up":
-      return totalUp / limit * 100;
-    case "down":
-      return totalDown / limit * 100;
-    default:
-      return 0;
-  }
-}
-
 function getTrafficUsed(totalUp: number, totalDown: number, type: "max" | "min" | "sum" | "up" | "down") {
   switch (type) {
     case "max":
@@ -85,6 +67,53 @@ function formatTrafficPercentage(value: number): string {
   if (value >= 1) return `${value.toFixed(2)}%`;
   if (value >= 0.01) return `${value.toFixed(3)}%`;
   return "<0.01%";
+}
+
+function getTrafficRemaining(limit: number, used: number) {
+  if (!Number.isFinite(limit) || limit <= 0) return 0;
+  return Math.max(limit - used, 0);
+}
+
+function getTrafficRemainingPercentage(limit: number, remaining: number) {
+  if (!Number.isFinite(limit) || limit <= 0) return 0;
+  return (remaining / limit) * 100;
+}
+
+function getTrafficStatTypeLabel(type: "max" | "min" | "sum" | "up" | "down", t: TFunction) {
+  switch (type) {
+    case "up":
+      return t("nodeCard.trafficStatTypeUp", { defaultValue: "仅上传" });
+    case "down":
+      return t("nodeCard.trafficStatTypeDown", { defaultValue: "仅下载" });
+    case "max":
+      return t("nodeCard.trafficStatTypeMax", { defaultValue: "取较大值" });
+    case "min":
+      return t("nodeCard.trafficStatTypeMin", { defaultValue: "取较小值" });
+    case "sum":
+    default:
+      return t("nodeCard.trafficStatTypeSum", { defaultValue: "总量" });
+  }
+}
+
+function getRemainingTrafficTone(remainingPercentage: number) {
+  if (remainingPercentage > 70) {
+    return {
+      progressClassName: "bg-emerald-500",
+      percentageClassName: "text-emerald-600 dark:text-emerald-400",
+    };
+  }
+
+  if (remainingPercentage > 30) {
+    return {
+      progressClassName: "bg-amber-500",
+      percentageClassName: "text-amber-600 dark:text-amber-400",
+    };
+  }
+
+  return {
+    progressClassName: "bg-rose-500",
+    percentageClassName: "text-rose-600 dark:text-rose-400",
+  };
 }
 
 // --- Components ---
@@ -129,17 +158,22 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
   const totalUpload = formatBytes(liveData.network.totalUp);
   const totalDownload = formatBytes(liveData.network.totalDown);
   const trafficLimitType = basic.traffic_limit_type ?? "sum";
+  const hasTrafficLimit = basic.traffic_limit > 0;
   const trafficUsed = getTrafficUsed(
     liveData.network.totalUp,
     liveData.network.totalDown,
     trafficLimitType
   );
-  const trafficPercentage = getTrafficPercentage(
-    liveData.network.totalUp,
-    liveData.network.totalDown,
+  const trafficRemaining = getTrafficRemaining(
     basic.traffic_limit,
-    trafficLimitType
+    trafficUsed
   );
+  const trafficRemainingPercentage = getTrafficRemainingPercentage(
+    basic.traffic_limit,
+    trafficRemaining
+  );
+  const trafficStatTypeLabel = getTrafficStatTypeLabel(trafficLimitType, t);
+  const remainingTrafficTone = getRemainingTrafficTone(trafficRemainingPercentage);
 
   // Layout-specific styles
   const cardStyles = {
@@ -324,19 +358,60 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
           
           <Separator className="opacity-30" />
           
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground flex items-center gap-1">
-               {t("nodeCard.totalTraffic")}
-            </span>
-             <div className="flex gap-3 font-mono text-xs text-muted-foreground">
-                <span className="flex items-center">
-                  <ArrowUp className="h-3 w-3 mr-0.5" /> {totalUpload}
+          {hasTrafficLimit ? (
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-muted-foreground">
+                  {t("nodeCard.monthlyRemainingTraffic", {
+                    defaultValue: "本月剩余流量",
+                  })}{" "}
+                  ({trafficStatTypeLabel})
                 </span>
-                <span className="flex items-center">
-                  <ArrowDown className="h-3 w-3 mr-0.5" /> {totalDownload}
+                <span className="text-right font-mono text-xs text-foreground">
+                  {formatBytes(trafficRemaining)} / {formatBytes(basic.traffic_limit)}
                 </span>
-             </div>
-          </div>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  data-testid="monthly-traffic-progress-bar"
+                  className={`h-full rounded-full ${remainingTrafficTone.progressClassName}`}
+                  style={{ width: `${Math.min(trafficRemainingPercentage, 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[10px] font-mono">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <ArrowUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    {t("nodeCard.uploadAmount", { defaultValue: "上传量" })} {totalUpload}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ArrowDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    {t("nodeCard.downloadAmount", { defaultValue: "下载量" })} {totalDownload}
+                  </span>
+                </div>
+                <span
+                  data-testid="monthly-traffic-percentage"
+                  className={remainingTrafficTone.percentageClassName}
+                >
+                  {formatTrafficPercentage(trafficRemainingPercentage)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground flex items-center gap-1">
+                 {t("nodeCard.totalTraffic")}
+              </span>
+               <div className="flex gap-3 font-mono text-xs text-muted-foreground">
+                  <span className="flex items-center">
+                    <ArrowUp className="h-3 w-3 mr-0.5" /> {totalUpload}
+                  </span>
+                  <span className="flex items-center">
+                    <ArrowDown className="h-3 w-3 mr-0.5" /> {totalDownload}
+                  </span>
+               </div>
+            </div>
+          )}
 
           <Separator className="opacity-30" />
 
@@ -352,28 +427,6 @@ const Node = ({ basic, live, online, onOpenNodeDetails }: NodeProps) => {
             )}
           </div>
 
-          <Separator className="opacity-30" />
-
-          {/* Traffic Limit Progress (if exists) */}
-          {basic.traffic_limit > 0 && (
-            <div className="mt-2 pt-1">
-               <div className="flex justify-between text-[10px] mb-1 text-muted-foreground">
-                 <span>{trafficLimitType.toUpperCase()} Limit</span>
-                 <span className="font-mono">
-                   {formatBytes(trafficUsed)} / {formatBytes(basic.traffic_limit)}
-                 </span>
-               </div>
-               <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                 <div 
-                   className="h-full bg-primary/70 rounded-full"
-                   style={{ width: `${Math.min(trafficPercentage, 100)}%` }}
-                 />
-               </div>
-               <div className="mt-1 flex justify-end text-[10px] font-mono text-muted-foreground">
-                 <span>{formatTrafficPercentage(trafficPercentage)}</span>
-               </div>
-            </div>
-          )}
         </div>
       </CardContent>
 
